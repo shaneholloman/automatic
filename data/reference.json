@@ -934,6 +934,16 @@
     "extras": "sampler: Default",
     "size": 24.85,
     "date": "2025 September"
+  },
+
+  "VIBE Image Edit": {
+    "path": "vladmandic/VIBE-Image-Edit",
+    "preview": "vladmandic--VIBE-Image-Edit.jpg",
+    "desc": "VIBE is an open-source text-guided image editing model combining Sana1.5-1.6B diffusion backbone with Qwen3-VL multimodal conditioning for fast, instruction-based edits.",
+    "skip": true,
+    "extras": "sampler: Default, cfg_scale: 4.5, image_guidance_scale: 1.2, steps: 20",
+    "size": 9.72,
+    "date": "2025 December"
   }
 
 }

@@ -258,7 +258,7 @@ def load_text_encoder(repo_id, cls_name, load_config=None, subfolder="text_encod
 
 def load_vae_override(pipe, load_config=None, override_cls=None, override_args={}):
     if shared.state.interrupted:
-        return None
+        return
     if (shared.opts.sd_vae in [None, 'None', 'Default', 'Automatic']):
         return
     if (pipe is None) or (getattr(pipe, 'vae', None) is None):
