@@ -5,6 +5,7 @@ let currentSize = 0;
 let currentSort = 'none';
 let currentName = '';
 let currentImage = null;
+let currentTitle = '';
 let currentGalleryFolder = null;
 let pruneImagesTimer;
 let outstanding = 0;
@@ -76,6 +77,8 @@ function resetGallerySelection() {
   updateGallerySelectionClasses(gallerySelection.files, -1);
   gallerySelection = { files: [], index: -1 };
   currentImage = null;
+  currentName = '';
+  currentTitle = '';
 }
 
 function applyGallerySelection(index, { send = true } = {}) {
@@ -89,6 +92,8 @@ function applyGallerySelection(index, { send = true } = {}) {
   }
   gallerySelection.index = index;
   currentImage = files[index].src;
+  currentName = files[index].name;
+  currentTitle = files[index].title;
   updateGallerySelectionClasses(files, index);
   if (send && el.btnSend) el.btnSend.click();
 }
@@ -560,6 +565,7 @@ class GalleryFile extends HTMLElement {
       this.shadow.appendChild(el.overlay);
       currentImage = this.src;
       currentName = this.name;
+      currentTitle = this.title;
     };
     img.onpointerleave = () => {
       el.overlay.display = 'none';
@@ -1372,7 +1378,7 @@ async function overlayInfo(evt) {
   delete params.Prompt;
   delete params.Negative;
   delete params['Negative prompt'];
-  const paramsFormatted = Object.entries(params).map(([key, value]) => `<b>${key}:</b> ${value}`).join('<br>');
+  const paramsFormatted = Object.entries(params).map(([key, value]) => `<b>${key}:</b> ${value}`).join(' | ');
   tgt.innerHTML = `
     <div><b>File:</b> ${currentImage}</div>
     <div><b>Prompt:</b> ${prompt}</div>
@@ -1380,6 +1386,10 @@ async function overlayInfo(evt) {
     <div>${paramsFormatted}</div>
     <div><b>Raw:</b><pre style="white-space: pre-wrap; margin: 0.5em">${raw}</pre></div>
   `;
+  const img = document.querySelector('#gallery_gallery img');
+  if (img) img.src = `/file=${encodeURIComponent(currentImage)}?t=${Date.now()}`; // Force refresh in case info endpoint is faster than cache update
+  const status = document.querySelector('#html_log_gallery p');
+  if (status) status.innerText = currentTitle;
 }
 
 async function createOverlay() {

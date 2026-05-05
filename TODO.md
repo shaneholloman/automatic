@@ -54,7 +54,6 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
 
 - [JoyAI-Image-Edit](https://github.com/huggingface/diffusers/pull/13444) (pr in-progress)
 - [Lumina-DiMOO](https://github.com/huggingface/diffusers/pull/12468) (pr stalled)
-- [Step1X-Edit](https://github.com/huggingface/diffusers/pull/12249) (pr stalled)
 - [VIBE Image Edit](https://huggingface.co/iitolstykh/VIBE-Image-Edit) (diffusers-compatible)
 - [nVidia Cosmos-Predict-2.5](https://huggingface.co/nvidia/Cosmos-Predict2.5-2B) (in diffusers)
 - [nVidia Cosmos-Transfer-2.5](https://huggingface.co/nvidia/Cosmos-Transfer2.5-2B) (in diffusers)

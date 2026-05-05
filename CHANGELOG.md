@@ -11,6 +11,7 @@
   - **Anima** support for *img2img* and *inpaint* workflows
   - **Ernie-Image** add *LoRA* support, *img2img* and *inpaint* workflows
   - **LTX** support for *audio* generation
+  - **Chroma** add *LoRA* support
   - [StepFun Step1X-Edit v1.1](https://huggingface.co/stepfun-ai/Step1X-Edit-v1p1-diffusers) image edit model support  
     step1x is a large dedicated image edit model combining qwen-2.5 8B encoder with custom 12.4B transformer  
   - **Prompt enhance** add info to image metadata  
