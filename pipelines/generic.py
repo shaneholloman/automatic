@@ -20,6 +20,8 @@ def _loader(component):
 
 
 def load_transformer(repo_id, cls_name, load_config=None, subfolder="transformer", allow_quant=True, variant=None, dtype=None, modules_to_not_convert=None, modules_dtype_dict=None):
+    if shared.state.interrupted:
+        return None
     transformer = None
     if load_config is None:
         load_config = {}
@@ -101,6 +103,8 @@ def load_transformer(repo_id, cls_name, load_config=None, subfolder="transformer
 
 
 def load_text_encoder(repo_id, cls_name, load_config=None, subfolder="text_encoder", allow_quant=True, allow_shared=True, variant=None, dtype=None, modules_to_not_convert=None, modules_dtype_dict=None):
+    if shared.state.interrupted:
+        return None
     text_encoder = None
     if load_config is None:
         load_config = {}
@@ -253,6 +257,8 @@ def load_text_encoder(repo_id, cls_name, load_config=None, subfolder="text_encod
 
 
 def load_vae_override(pipe, load_config=None, override_cls=None, override_args={}):
+    if shared.state.interrupted:
+        return None
     if (shared.opts.sd_vae in [None, 'None', 'Default', 'Automatic']):
         return
     if (pipe is None) or (getattr(pipe, 'vae', None) is None):

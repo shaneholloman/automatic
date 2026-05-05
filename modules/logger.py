@@ -62,10 +62,27 @@ def install_traceback(suppress: list | None = None):
 
 
 
-_log_config = {'debug': False, 'trace': False, 'log_filename': None}
+_log_config = {'debug': False, 'trace': False, 'log_filename': None, 'traceback_panel_patched': False}
 
 def setup_logging(debug=None, trace=None, filename=None):
     global log_file, console, log_rolled # pylint: disable=global-statement
+
+    def patch_traceback_panel():
+        # Rich traceback always wraps output in Panel; replace only traceback-local Panel with passthrough.
+        if str_to_bool(os.environ.get("SD_TRACEBOX", False)):
+            return
+        try:
+            import rich.traceback as rich_traceback
+            if _log_config['traceback_panel_patched']:
+                return
+
+            def _panel_passthrough(renderable, *args, **kwargs): # pylint: disable=unused-argument
+                return renderable
+
+            rich_traceback.Panel = _panel_passthrough
+            _log_config['traceback_panel_patched'] = True
+        except Exception:
+            pass
 
     if debug is not None:
         _log_config['debug'] = debug
@@ -177,6 +194,7 @@ def setup_logging(debug=None, trace=None, filename=None):
 
     Padding.__rich_console__ = override_padding
     box.ROUNDED = box.SIMPLE
+    patch_traceback_panel()
     console = Console(
         log_time=True,
         log_time_format='%H:%M:%S-%f',

@@ -34,6 +34,8 @@
 - **Internal**
   - refactor `pip` installer, thanks @awsr
   - remove obsolete `lora` stepwise and functional code, thanks @awsr
+  - interrupt model loading between components
+  - patch `rich` for cleaner exception logging
 - **Fixes**
   - add missing `jquery` and `sparkline` js scripts
   - save handle already decoded images
