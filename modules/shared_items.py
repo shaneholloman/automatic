@@ -26,6 +26,7 @@ pipelines = {
     'HunyuanDiT': getattr(diffusers, 'HunyuanDiTPipeline', None),
     'DeepFloyd IF': getattr(diffusers, 'IFPipeline', None),
     'FLUX': getattr(diffusers, 'FluxPipeline', None),
+    'UltraFlux': getattr(diffusers, 'DiffusionPipeline', None),
     'FLEX': getattr(diffusers, 'AutoPipelineForText2Image', None),
     'Chroma': getattr(diffusers, 'ChromaPipeline', None),
     'Sana': getattr(diffusers, 'SanaPipeline', None),

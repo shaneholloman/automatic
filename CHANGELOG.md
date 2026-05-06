@@ -2,6 +2,19 @@
 
 ## Update for 2026-05-05
 
+### Highlights for 2026-05-05
+
+*What's New?*
+- Image editing models now can work with multiple image inputs!  
+- New models: *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux* plus enhanced capabilities for *Anima*, *Ernie-Image*, *LTX* and *Chroma* models  
+- UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, and more
+
+For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md)  
+
+[ReadMe](https://github.com/vladmandic/automatic/blob/master/README.md) | [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md) | [Docs](https://vladmandic.github.io/sdnext-docs/) | [WiKi](https://github.com/vladmandic/automatic/wiki) | [Discord](https://discord.com/invite/sd-next-federal-batch-inspectors-1101998836328697867) | [Sponsor](https://github.com/sponsors/vladmandic)  
+
+### Details for 2026-05-05
+
 - **Features**
   - **Multi-image** workflows!
     for models that support multiple images as inputs, you can now add multiple stages in Kanvas  
@@ -12,14 +25,17 @@
   - **Ernie-Image** add *LoRA* support, *img2img* and *inpaint* workflows
   - **LTX** support for *audio* generation
   - **Chroma** add *LoRA* support
+  - **Prompt enhance** add info to image metadata  
+  - custom **VAE** loader for all pipelines  
+    *note*: vae still needs to be compatible with the model  
+- **Models**
   - [StepFun Step1X-Edit v1.1](https://huggingface.co/stepfun-ai/Step1X-Edit-v1p1-diffusers) image edit model support  
     step1x is a large dedicated image edit model combining qwen-2.5 8B encoder with custom 12.4B transformer  
   - [VIBE Image Edit](https://huggingface.co/iitolstykh/VIBE-Image-Edit) text-guided image editing model  
     built on Sana1.5-1.6B diffusion backbone with Qwen3-VL-2B multimodal conditioning  
     supports both image editing and text-to-image generation; uses multi-scale resolution binning up to 2048px  
-  - **Prompt enhance** add info to image metadata  
-  - custom **VAE** loader for all pipelines  
-    *note*: vae still needs to be compatible with the model  
+  - [Owen777 UltraFlux-v1](https://huggingface.co/Owen777/UltraFlux-v1) native 4K text-to-image model based on FLUX.1-dev  
+    *note*: UltraFlux is capable of rendering images up to 4K resolution, but it doesnt mean it will do that on any hardware - it will depend on your VRAM!
 - **UI**
   - add button to manually reorient input/output panels
   - all ui panels can be minimized/maximized by clicking on their header  
@@ -45,6 +61,7 @@
   - ernie-image preview
   - lora false deactivate
   - kandinsky-5 t2i/i2i workflows
+  - progress do not timeout when paused
 
 ## Update for 2026-04-28
 

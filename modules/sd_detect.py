@@ -97,6 +97,8 @@ def guess_by_name(fn, current_guess):
         new_guess = 'FLUX2 Klein'
     elif 'flux.2' in fn.lower():
         new_guess = 'FLUX2'
+    elif 'ultraflux' in fn.lower():
+        new_guess = 'UltraFlux'
     elif 'flux' in fn.lower() or 'flex.1' in fn.lower():
         size = round(os.path.getsize(fn) / 1024 / 1024) if os.path.isfile(fn) else 0
         if size > 11000 and size < 16000:
@@ -166,14 +168,16 @@ def guess_by_name(fn, current_guess):
 
 
 def guess_by_diffusers(fn, current_guess):
-    exclude_by_name = ['ostris/Flex.2-preview'] # pipeline may be misleading
+    exclude_by_name = ['ostris/Flex.2-preview', 'Owen777/UltraFlux-v1', './pretrain/FLUX.1-dev'] # pipeline may be misleading
     if not os.path.isdir(fn):
         return current_guess, None
     index = os.path.join(fn, 'model_index.json')
     if os.path.exists(index) and os.path.isfile(index):
         index = shared.readfile(index, silent=True, as_type="dict")
         name = index.get('_name_or_path', None)
-        if name is not None and name in exclude_by_name:
+        if debug_load:
+            log.trace(f'Autodetect: method=diffusers file="{fn}" name="{name}"')
+        if (name is not None) and (name in exclude_by_name):
             return current_guess, None
         cls = index.get('_class_name', None)
         if isinstance(cls, list):
@@ -242,9 +246,17 @@ def detect_pipeline(f: str, op: str = 'model'):
         try:
             guess = 'Stable Diffusion XL' if ('XL' in f.upper() or 'SDNQ' in f.upper()) else 'Stable Diffusion' # set default guess
             guess = guess_by_size(f, guess)
+            if debug_load:
+                log.trace(f'Autodetect: type=size guess="{guess}" file="{f}"')
             guess = guess_by_name(f, guess)
+            if debug_load:
+                log.trace(f'Autodetect: type=name guess="{guess}" file="{f}"')
             guess, pipeline = guess_by_diffusers(f, guess)
+            if debug_load:
+                log.trace(f'Autodetect: type=diffusers guess="{guess}" file="{f}"')
             guess = guess_variant(f, guess)
+            if debug_load:
+                log.trace(f'Autodetect: type=variant guess="{guess}" file="{f}"')
             pipeline = shared_items.get_pipelines().get(guess, None) if pipeline is None else pipeline
             log.info(f'Autodetect {op}: detect="{guess}" class={getattr(pipeline, "__name__", None)} file="{f}"')
             if debug_load is not None:

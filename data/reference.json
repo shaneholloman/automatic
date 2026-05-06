@@ -143,6 +143,16 @@
     "date": "2025 January"
   },
 
+  "Owen777 UltraFlux-v1": {
+    "path": "Owen777/UltraFlux-v1",
+    "preview": "Owen777--UltraFlux-v1.jpg",
+    "desc": "UltraFlux-v1 is a FLUX.1-dev based text-to-image model optimized for native 4K and multi-aspect-ratio generation with improved composition consistency.",
+    "skip": true,
+    "extras": "sampler: Default, cfg_scale: 4.0, steps: 50",
+    "size": 33.0,
+    "date": "2025 November"
+  },
+
   "Z-Image": {
     "path": "Tongyi-MAI/Z-Image",
     "preview": "Tongyi-MAI--Z-Image.jpg",

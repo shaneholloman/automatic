@@ -1,5 +1,6 @@
 let lastState = {};
 let refreshInterval = 10000;
+const progressTimeout = 180;
 
 function setRefreshInterval() {
   refreshInterval = opts.live_preview_refresh_period || 500;
@@ -144,9 +145,9 @@ function requestProgress(id_task, progressEl, galleryEl, atEnd = null, onProgres
       lastState = res;
       const elapsedFromStart = (new Date() - dateStart) / 1000;
       hasStarted |= res.active;
-      if (res.completed || (!res.active && (hasStarted || once)) || (elapsedFromStart > 120 && !res.queued && res.progress === prevProgress)) {
+      if (res.completed || (!res.active && (hasStarted || once)) || (elapsedFromStart > progressTimeout && !res.queued && res.progress === prevProgress)) {
         debug('livePreview end:', res);
-        done();
+        if (!res.paused) done(); // only abort if not paused
         return;
       }
       if (res.progress !== prevProgress) {

@@ -48,6 +48,8 @@ def get_model_type(pipe):
         model_type = 'chroma'
     elif "Flux2" in name:
         model_type = 'f2'
+    elif "UltraFlux" in name:
+        model_type = 'ultraflux'
     elif "Flux" in name or "Flex1" in name or "Flex2" in name:
         model_type = 'f1'
     elif "ZImage" in name or "Z-Image" in name:

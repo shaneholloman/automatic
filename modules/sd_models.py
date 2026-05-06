@@ -377,6 +377,10 @@ def load_diffuser_force(detected_model_type, checkpoint_info, diffusers_load_con
             from pipelines.model_auraflow import load_auraflow
             sd_model = load_auraflow(checkpoint_info, diffusers_load_config)
             allow_post_quant = False
+        elif model_type in ['UltraFlux']:
+            from pipelines.model_ultraflux import load_ultraflux
+            sd_model = load_ultraflux(checkpoint_info, diffusers_load_config)
+            allow_post_quant = False
         elif model_type in ['FLUX']:
             from pipelines.model_flux import load_flux
             sd_model = load_flux(checkpoint_info, diffusers_load_config)

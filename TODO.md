@@ -56,7 +56,6 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
 - [Lumina-DiMOO](https://github.com/huggingface/diffusers/pull/12468) (pr stalled)
 - [nVidia Cosmos-Predict-2.5](https://huggingface.co/nvidia/Cosmos-Predict2.5-2B) (in diffusers)
 - [nVidia Cosmos-Transfer-2.5](https://huggingface.co/nvidia/Cosmos-Transfer2.5-2B) (in diffusers)
-- [UltraFlux](https://huggingface.co/Owen777/UltraFlux-v1) (diffusers-compatible)
 - [Tencent HY-WU](https://huggingface.co/tencent/HY-WU) (transformers-compatible)
 - [Mugen](https://huggingface.co/CabalResearch/Mugen) (sdxl with flux vae experiment, not clean)
 - [Liquid](https://github.com/FoundationVision/Liquid) (autoregressive, not clean)

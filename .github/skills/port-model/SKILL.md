@@ -135,6 +135,9 @@ Pipeline module responsibilities:
 - Output dataclass
 - Optional callback handling and output conversion
 
+If custom pipeline is provided by user, check it for accuracy and completness but do not assume it is perfect. Make necessary adjustments to fit SD.Next patterns and validate the result.
+Fix all relative imports to be absolute and compatible with SD.Next repo structure, make sure that all imports are resolvable and make sure it passes `ruff` checks.
+
 ### 3. Raw Checkpoint Or Single-File Weights
 
 Use this path when the model source is not a normal Diffusers repository.

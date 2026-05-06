@@ -66,7 +66,7 @@ def get_model(model_type = 'decoder', variant = None):
         model_cls = 'sd'
     elif model_cls in {'pixartsigma', 'hunyuandit', 'omnigen', 'auraflow'}:
         model_cls = 'sdxl'
-    elif model_cls in {'f1', 'h1', 'zimage', 'lumina2', 'chroma', 'longcat', 'omnigen2', 'flite', 'ovis', 'kandinsky5', 'glmimage', 'cogview3', 'cogview4'}:
+    elif model_cls in {'f1', 'h1', 'zimage', 'lumina2', 'chroma', 'longcat', 'omnigen2', 'flite', 'ovis', 'kandinsky5', 'glmimage', 'cogview3', 'cogview4', 'ultraflux'}:
         model_cls = 'f1'
         variant = 'TAE FLUX.1'
     elif model_cls in {'f2', 'ernieimage'}:
