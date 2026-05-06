@@ -55,7 +55,7 @@ class FilenameGenerator:
         'prompt_hash': lambda self: hashlib.sha256(self.prompt.encode()).hexdigest()[0:8],
 
         'sampler': lambda self: self.p and self.p.sampler_name,
-        'seed': lambda self: (self.seed and str(self.seed)) or '',
+        'seed': lambda self: (hasattr(self, "seed") and self.seed and str(self.seed)) or '',
         'steps': lambda self: self.p and getattr(self.p, 'steps', 0),
         'cfg': lambda self: self.p and getattr(self.p, 'cfg_scale', 0),
         'pag': lambda self: self.p and getattr(self.p, 'pag_scale', 0),
