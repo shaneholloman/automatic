@@ -31,7 +31,6 @@ pipelines = {
     'Chroma': getattr(diffusers, 'ChromaPipeline', None),
     'Sana': getattr(diffusers, 'SanaPipeline', None),
     'Lumina-Next': getattr(diffusers, 'LuminaText2ImgPipeline', None),
-    # 'Lumina-DiMOO': getattr(diffusers, 'LuminaDiMOOPipeline', None),
     'Lumina 2': getattr(diffusers, 'Lumina2Pipeline', None),
     'AuraFlow': getattr(diffusers, 'AuraFlowPipeline', None),
     'Kandinsky 2.1': getattr(diffusers, 'KandinskyCombinedPipeline', None),
@@ -56,7 +55,6 @@ pipelines = {
     'FLUX2 Klein': getattr(diffusers, 'Flux2KleinPipeline', None),
     'LongCat': getattr(diffusers, 'LongCatImagePipeline', None),
     'GLM-Image': getattr(diffusers, 'GlmImagePipeline', None),
-    'VIBE': getattr(diffusers, 'VIBESanaEditingPipeline', getattr(diffusers, 'DiffusionPipeline', None)),
     # dynamically imported and redefined later
     'Meissonic': getattr(diffusers, 'DiffusionPipeline', None),
     'OmniGen2': getattr(diffusers, 'DiffusionPipeline', None),
@@ -70,6 +68,8 @@ pipelines = {
     'Anima': getattr(diffusers, 'DiffusionPipeline', None),
     'SDXS': getattr(diffusers, 'DiffusionPipeline', None),
     'Step1X-Edit': getattr(diffusers, 'DiffusionPipeline', None),
+    'VIBE': getattr(diffusers, 'DiffusionPipeline', None),
+    'Lumina-DiMOO': getattr(diffusers, 'DiffusionPipeline', None),
 }
 
 

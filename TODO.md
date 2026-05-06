@@ -53,12 +53,9 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
 ### Image
 
 - [JoyAI-Image-Edit](https://github.com/huggingface/diffusers/pull/13444) (pr in-progress)
-- [Lumina-DiMOO](https://github.com/huggingface/diffusers/pull/12468) (pr stalled)
 - [nVidia Cosmos-Predict-2.5](https://huggingface.co/nvidia/Cosmos-Predict2.5-2B) (in diffusers)
 - [nVidia Cosmos-Transfer-2.5](https://huggingface.co/nvidia/Cosmos-Transfer2.5-2B) (in diffusers)
 - [Tencent HY-WU](https://huggingface.co/tencent/HY-WU) (transformers-compatible)
-- [Mugen](https://huggingface.co/CabalResearch/Mugen) (sdxl with flux vae experiment, not clean)
-- [Liquid](https://github.com/FoundationVision/Liquid) (autoregressive, not clean)
 
 ### Video
 
@@ -148,6 +145,11 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
 - [Bria FIBO RMBG](https://huggingface.co/briaai/RMBG-2.0)
   - Background removal model trained on Bria FIBO dataset
   - Created: 2025-08 | Updated: 2025-09 | Stars: N/A (private model)
+
+### Rejected
+
+- [Mugen](https://huggingface.co/CabalResearch/Mugen) (sdxl with flux vae experiment, not clean)
+- [Liquid](https://github.com/FoundationVision/Liquid) (autoregressive, not clean)
 
 ## Code TODO
 

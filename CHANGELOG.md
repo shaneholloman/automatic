@@ -34,6 +34,10 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - [VIBE Image Edit](https://huggingface.co/iitolstykh/VIBE-Image-Edit) text-guided image editing model  
     built on Sana1.5-1.6B diffusion backbone with Qwen3-VL-2B multimodal conditioning  
     supports both image editing and text-to-image generation; uses multi-scale resolution binning up to 2048px  
+  - [AlphaVLLM Lumina-DiMOO](https://huggingface.co/Alpha-VLLM/Lumina-DiMOO) unified multimodal diffusion model  
+    includes *T2I*, *I2I edit*, and *MMU* capabilities in a single pipeline  
+    *note* in addition to normal prompt-based image editing, model also supports special prompts: *dense, canny_pred, control, subject, edit, ref_transfer, multi_view*
+    *note* as any multi-modal/unified model, it needs higher step count: recommended is 64 steps  
   - [Owen777 UltraFlux-v1](https://huggingface.co/Owen777/UltraFlux-v1) native 4K text-to-image model based on FLUX.1-dev  
     *note*: UltraFlux is capable of rendering images up to 4K resolution, but it doesnt mean it will do that on any hardware - it will depend on your VRAM!
 - **UI**
