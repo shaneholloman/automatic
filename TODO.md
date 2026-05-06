@@ -17,7 +17,6 @@
   - `RIFE` in processing
   - `SeedVR2` in processing
 - Video model loader: Add video models to Reference
-- REMBG add <https://huggingface.co/briaai/RMBG-2.0>
 - UI Lite vs Expert mode
 - TensorRT acceleration
 - Auto handle scheduler `prediction_type`
@@ -60,8 +59,6 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
 ### Video
 
 - [HY-OmniWeaving](https://huggingface.co/tencent/HY-OmniWeaving)
-- [LTX-Condition](https://huggingface.co/Lightricks/LTX-2)
-- [LTX-Distilled](https://huggingface.co/Lightricks/LTX-2)
 - [OpenMOSS MOVA](https://huggingface.co/OpenMOSS-Team/MOVA-720p)
 - [Wan2.2-Animate](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B)
 - [Wan2.1-T2V-14B-CausVid](https://huggingface.co/lightx2v/Wan2.1-T2V-14B-CausVid)
@@ -75,12 +72,11 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
 - [Sana I2V](https://huggingface.co/Efficient-Large-Model/SANA-Video_2B_480p_diffusers)
 - [Wan-2.2 S2V](https://huggingface.co/Wan-AI/Wan2.2-S2V-14B)
 - [Meituan LongCat-Video](https://huggingface.co/meituan-longcat/LongCat-Video)
-- [LTXVideo LongMulti](https://huggingface.co/Lightricks/LTX-Video-0.9.8-13B-distilled)
 - [Phantom HuMo](https://github.com/Phantom-video/Phantom)
 - [CausVid-Plus](https://github.com/goatWu/CausVid-Plus/)
 - [LivePortrait](https://github.com/KwaiVGI/LivePortrait)
-- [Magi (SandAI)](https://github.com/SandAI-org/MAGI-1)
-- [Ming (inclusionAI)](https://github.com/inclusionAI/Ming)
+- [SandAI Magi](https://github.com/SandAI-org/MAGI-1)
+- [inclusionAI Ming](https://github.com/inclusionAI/Ming)
 - [HummingbirdXT](https://huggingface.co/amd/HummingbirdXT)
 - [DiffusionForcing](https://github.com/kwsong0113/diffusion-forcing-transformer)
 - [ByteDance Lynx](https://github.com/bytedance/lynx)
