@@ -181,10 +181,16 @@ def _apply_color_temp(img: torch.Tensor, kelvin: float) -> torch.Tensor:
 
 def _apply_lut(image: Image.Image, lut_cube_file: str, strength: float) -> Image.Image:
     """Apply .cube LUT file via pillow-lut-tools."""
-    if not lut_cube_file or not os.path.isfile(lut_cube_file):
+    if not lut_cube_file:
         return image
-    pillow_lut = _ensure_pillow_lut()
+    if hasattr(lut_cube_file, "name"):
+        lut_cube_file = lut_cube_file.name
+    if hasattr(lut_cube_file, "as_posix"):
+        lut_cube_file = lut_cube_file.as_posix()
     try:
+        if not os.path.isfile(lut_cube_file):
+            return image
+        pillow_lut = _ensure_pillow_lut()
         cube = pillow_lut.load_cube_file(lut_cube_file)
         if strength != 1.0:
             cube = pillow_lut.amplify_lut(cube, strength)
