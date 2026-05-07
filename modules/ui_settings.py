@@ -206,8 +206,8 @@ def create_ui(disabled_tabs=None):
             unload_sd_model.click(fn=unload_sd_weights, inputs=[], outputs=[])
             reload_sd_model.click(fn=reload_sd_weights, inputs=[], outputs=[])
             enable_profiling.click(fn=switch_profiling, inputs=[], outputs=[enable_profiling])
-            restart_submit.click(fn=lambda: shared.restart_server(restart=True), _js="restartReload")
-            shutdown_submit.click(fn=lambda: shared.restart_server(restart=False), _js="restartReload")
+            restart_submit.click(fn=lambda: shared.restart_server(restart=True), _js="() => { restartReload(); }")
+            shutdown_submit.click(fn=lambda: shared.restart_server(restart=False), _js="() => { restartReload(); }")
 
     with gr.Tabs(elem_id="system") as system_tabs:
         global ui_system_tabs # pylint: disable=global-statement
@@ -313,7 +313,7 @@ def create_ui(disabled_tabs=None):
         outputs=[text_settings, result],
     )
     if defaults_submit:
-        defaults_submit.click(fn=lambda: shared.restore_defaults(restart=True), _js="restartReload")
+        defaults_submit.click(fn=lambda: shared.restore_defaults(restart=True), _js="() => { restartReload(); }")
 
 
 def reset_quicksettings(quick_components):
