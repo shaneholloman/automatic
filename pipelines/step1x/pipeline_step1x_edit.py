@@ -258,7 +258,19 @@ User Prompt:'''
             device=device,
         )
 
-        for idx, (txt, imgs) in enumerate(zip(text_list, [ref_image])):
+        if isinstance(ref_image, list):
+            image_list = ref_image
+        else:
+            image_list = [ref_image] * len(text_list)
+
+        if len(image_list) == 1 and len(text_list) > 1:
+            image_list = image_list * len(text_list)
+        if len(image_list) != len(text_list):
+            raise ValueError(
+                f"Mismatch between prompts ({len(text_list)}) and reference images ({len(image_list)})."
+            )
+
+        for idx, (txt, imgs) in enumerate(zip(text_list, image_list)):
 
             messages = [
                 {
@@ -408,7 +420,8 @@ User Prompt:'''
             width = width if width is not None else 1024
             height = height if height is not None else 1024
             img_info = (width, height)
-            ref_image = torch.zeros(3, 1024, 1024).unsqueeze(0).to(device)
+            # Keep t2i reference image size aligned with requested output size.
+            ref_image = torch.zeros(3, height, width).unsqueeze(0).to(device)
             ref_image = self.image_processor.pt_to_numpy(ref_image)
             ref_image = self.image_processor.numpy_to_pil(ref_image)[0]
             image = None
@@ -801,11 +814,11 @@ User Prompt:'''
 
         # 1. Preprocess image
         image, ref_image, img_info, width, height = self.encode_image(
-            image[0],
-            width,
-            height,
-            device,
-            num_images_per_prompt
+            image=image[0] if isinstance(image, list) and len(image) > 0 else None,
+            width=width,
+            height=height,
+            device=device,
+            num_images_per_prompt=num_images_per_prompt
         )
 
         # 2. Check inputs. Raise error if not correct
@@ -843,31 +856,62 @@ User Prompt:'''
         if not has_neg_prompt:
             negative_prompt = "" if image is not None else "worst quality, wrong limbs, unreasonable limbs, normal quality, low quality, low res, blurry, text, watermark, logo, banner, extra digits, cropped, jpeg artifacts, signature, username, error, sketch ,duplicate, ugly, monochrome, horror, geometry, mutation, disgusting"
         do_true_cfg = true_cfg_scale > 1
-        (
-            prompt_embeds,
-            prompt_embeds_mask,
-            text_ids
-        ) = self.encode_prompt(
-            ref_image=ref_image,
-            prompt=prompt,
-            prompt_embeds=prompt_embeds,
-            prompt_embeds_mask=prompt_embeds_mask,
-            device=device,
-            num_images_per_prompt=num_images_per_prompt,
-        )
-        if do_true_cfg:
+        negative_text_ids = None
+        if (
+            image is None
+            and do_true_cfg
+            and prompt_embeds is None
+            and negative_prompt_embeds is None
+            and isinstance(prompt, str)
+            and isinstance(negative_prompt, str)
+        ):
+            combined_prompts = [prompt, negative_prompt]
+            combined_ref_images = [ref_image, ref_image]
             (
-                negative_prompt_embeds,
-                negative_prompt_embeds_mask,
-                negative_text_ids,
+                combined_prompt_embeds,
+                combined_prompt_embeds_mask,
+                text_ids,
             ) = self.encode_prompt(
-                ref_image=ref_image,
-                prompt=negative_prompt,
-                prompt_embeds=negative_prompt_embeds,
-                prompt_embeds_mask=negative_prompt_embeds_mask,
+                ref_image=combined_ref_images,
+                prompt=combined_prompts,
+                prompt_embeds=None,
+                prompt_embeds_mask=None,
                 device=device,
                 num_images_per_prompt=num_images_per_prompt,
             )
+            prompt_embeds, negative_prompt_embeds = combined_prompt_embeds.chunk(2, dim=0)
+            prompt_embeds_mask, negative_prompt_embeds_mask = combined_prompt_embeds_mask.chunk(2, dim=0)
+            negative_text_ids = text_ids
+        else:
+            (
+                prompt_embeds,
+                prompt_embeds_mask,
+                text_ids
+            ) = self.encode_prompt(
+                ref_image=ref_image,
+                prompt=prompt,
+                prompt_embeds=prompt_embeds,
+                prompt_embeds_mask=prompt_embeds_mask,
+                device=device,
+                num_images_per_prompt=num_images_per_prompt,
+            )
+            negative_text_ids = text_ids
+            if do_true_cfg:
+                (
+                    negative_prompt_embeds,
+                    negative_prompt_embeds_mask,
+                    negative_text_ids,
+                ) = self.encode_prompt(
+                    ref_image=ref_image,
+                    prompt=negative_prompt,
+                    prompt_embeds=negative_prompt_embeds,
+                    prompt_embeds_mask=negative_prompt_embeds_mask,
+                    device=device,
+                    num_images_per_prompt=num_images_per_prompt,
+                )
+
+        if do_true_cfg and negative_text_ids is None:
+            negative_text_ids = text_ids
 
         # 4. Prepare latent variables
         num_channels_latents = self.transformer.config.in_channels // 4
@@ -946,6 +990,7 @@ User Prompt:'''
         # 6. Denoising loop
         # We set the index here to remove DtoH sync, helpful especially during compilation.
         # Check out more details here: https://github.com/huggingface/diffusers/pull/11696
+        is_t2i = image_latents is None
         self.scheduler.set_begin_index(0)
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
@@ -961,34 +1006,38 @@ User Prompt:'''
                     latent_model_input = torch.cat([latents, image_latents], dim=1)
                 timestep = t.expand(latents.shape[0]).to(latents.dtype)
 
-                noise_pred = self.transformer(
-                    hidden_states=latent_model_input,
-                    timestep=timestep / 1000,
-                    guidance=guidance,
-                    encoder_hidden_states=prompt_embeds,
-                    prompt_embeds_mask=prompt_embeds_mask,
-                    txt_ids=text_ids,
-                    img_ids=latent_ids,
-                    joint_attention_kwargs=self.joint_attention_kwargs,
-                    return_dict=False,
-                )[0]
-                noise_pred = noise_pred[:, : latents.size(1)]
+                if is_t2i and do_true_cfg:
+                    # Reference implementation uses a dedicated t2i denoise path
+                    # where cond/uncond are evaluated in one forward pass.
+                    cfg_hidden_states = torch.cat([latent_model_input, latent_model_input], dim=0)
+                    cfg_timestep = torch.cat([timestep, timestep], dim=0)
+                    cfg_prompt_embeds = torch.cat([prompt_embeds, negative_prompt_embeds], dim=0)
+                    cfg_prompt_embeds_mask = torch.cat([prompt_embeds_mask, negative_prompt_embeds_mask], dim=0)
 
-                if do_true_cfg:
-                    if negative_image_embeds is not None:
-                        self._joint_attention_kwargs["ip_adapter_image_embeds"] = negative_image_embeds
-                    neg_noise_pred = self.transformer(
-                        hidden_states=latent_model_input,
-                        timestep=timestep / 1000,
-                        guidance=guidance,
-                        encoder_hidden_states=negative_prompt_embeds,
-                        prompt_embeds_mask=negative_prompt_embeds_mask,
-                        txt_ids=negative_text_ids,
+                    cfg_guidance = guidance
+                    if cfg_guidance is not None:
+                        cfg_guidance = torch.cat([guidance, guidance], dim=0)
+
+                    if image_embeds is not None and negative_image_embeds is not None:
+                        self._joint_attention_kwargs["ip_adapter_image_embeds"] = [
+                            torch.cat([img_embed, neg_img_embed], dim=0)
+                            for img_embed, neg_img_embed in zip(image_embeds, negative_image_embeds)
+                        ]
+
+                    cfg_noise_pred = self.transformer(
+                        hidden_states=cfg_hidden_states,
+                        timestep=cfg_timestep / 1000,
+                        guidance=cfg_guidance,
+                        encoder_hidden_states=cfg_prompt_embeds,
+                        prompt_embeds_mask=cfg_prompt_embeds_mask,
+                        txt_ids=text_ids,
                         img_ids=latent_ids,
                         joint_attention_kwargs=self.joint_attention_kwargs,
                         return_dict=False,
                     )[0]
-                    neg_noise_pred = neg_noise_pred[:, : latents.size(1)]
+                    cfg_noise_pred = cfg_noise_pred[:, : latents.size(1)]
+                    noise_pred, neg_noise_pred = cfg_noise_pred.chunk(2, dim=0)
+
                     if t.item() > timesteps_truncate:
                         diff = noise_pred - neg_noise_pred
                         diff_norm = torch.norm(diff, dim=(2), keepdim=True)
@@ -997,10 +1046,54 @@ User Prompt:'''
                         ) / self.process_diff_norm(diff_norm, k=process_norm_power)
                     else:
                         noise_pred = neg_noise_pred + true_cfg_scale * (noise_pred - neg_noise_pred)
+                else:
+                    noise_pred = self.transformer(
+                        hidden_states=latent_model_input,
+                        timestep=timestep / 1000,
+                        guidance=guidance,
+                        encoder_hidden_states=prompt_embeds,
+                        prompt_embeds_mask=prompt_embeds_mask,
+                        txt_ids=text_ids,
+                        img_ids=latent_ids,
+                        joint_attention_kwargs=self.joint_attention_kwargs,
+                        return_dict=False,
+                    )[0]
+                    noise_pred = noise_pred[:, : latents.size(1)]
+
+                    if do_true_cfg:
+                        if negative_image_embeds is not None:
+                            self._joint_attention_kwargs["ip_adapter_image_embeds"] = negative_image_embeds
+                        neg_noise_pred = self.transformer(
+                            hidden_states=latent_model_input,
+                            timestep=timestep / 1000,
+                            guidance=guidance,
+                            encoder_hidden_states=negative_prompt_embeds,
+                            prompt_embeds_mask=negative_prompt_embeds_mask,
+                            txt_ids=negative_text_ids,
+                            img_ids=latent_ids,
+                            joint_attention_kwargs=self.joint_attention_kwargs,
+                            return_dict=False,
+                        )[0]
+                        neg_noise_pred = neg_noise_pred[:, : latents.size(1)]
+                        if t.item() > timesteps_truncate:
+                            diff = noise_pred - neg_noise_pred
+                            diff_norm = torch.norm(diff, dim=(2), keepdim=True)
+                            noise_pred = neg_noise_pred + true_cfg_scale * (
+                                noise_pred - neg_noise_pred
+                            ) / self.process_diff_norm(diff_norm, k=process_norm_power)
+                        else:
+                            noise_pred = neg_noise_pred + true_cfg_scale * (noise_pred - neg_noise_pred)
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents_dtype = latents.dtype
-                latents = self.scheduler.step(noise_pred, t, latents, return_dict=False)[0]
+                if is_t2i:
+                    t_prev = timesteps[i + 1] if i + 1 < len(timesteps) else latents.new_tensor(0.0)
+                    # Timesteps are fed to the model in /1000 scale, so use the same
+                    # normalized delta for manual t2i update.
+                    dt = ((t_prev - t) / 1000).to(latents.dtype)
+                    latents = latents + dt * noise_pred
+                else:
+                    latents = self.scheduler.step(noise_pred, t, latents, return_dict=False)[0]
 
                 if latents.dtype != latents_dtype:
                     if torch.backends.mps.is_available():

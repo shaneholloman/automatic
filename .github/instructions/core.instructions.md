@@ -13,3 +13,19 @@ applyTo: "launch.py, webui.py, installer.py, modules/**/*.py, pipelines/**/*.py,
 - Follow existing API/server patterns under `modules/api/` and reuse shared queue/state helpers rather than ad-hoc request handling.
 - Reuse established model-loading and pipeline patterns (`modules/sd_*`, `pipelines/`) instead of creating parallel abstractions.
 - For substantial Python changes, run at least relevant checks: `npm run ruff` and `npm run pylint` (or narrower equivalents when appropriate).
+
+## Build And Test
+
+- Activate environment: `source venv/bin/activate` (always ensure this is active when working with Python code).
+- Test startup: `python launch.py --test`
+- Full startup: `python launch.py`
+- Full lint sequence: `pnpm lint`
+- Python checks individually: `pnpm ruff`, `pnpm pylint`
+- JS checks: `pnpm eslint` and `pnpm eslint-ui`
+
+## Pitfalls
+
+- Initialization order matters: startup paths in `launch.py` and `webui.py` are sensitive to import/load timing.
+- Shared mutable global state can create subtle regressions; prefer narrow, explicit changes.
+- Device/backend-specific code paths (**CUDA/ROCm/IPEX/DirectML/OpenVINO**) should not assume one platform.
+- Scripts and extension loading is dynamic; failures may appear only when specific extensions or models are present.
