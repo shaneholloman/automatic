@@ -380,6 +380,11 @@ class ScriptRunner:
             script.is_img2img = is_img2img
             if path.startswith(paths.extensions_dir) and not path.startswith(paths.extensions_builtin_dir):
                 script.external = True
+            if is_control and script.external:
+                title = script.title()
+                if title not in control_extensions:
+                    log.debug(f'Script: fn="{script.filename}" type=control title="{title}" skip')
+                    return
             if is_control: # this is messy but show is a legacy function that is not aware of control tab
                 v1 = script.show(script.is_txt2img)
                 v2 = script.show(script.is_img2img)

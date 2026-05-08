@@ -28,6 +28,9 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - **Prompt enhance** add info to image metadata  
   - custom **VAE** loader for all pipelines  
     *note*: vae still needs to be compatible with the model  
+  - [SD Ultimate Upscale](https://github.com/Coyote-A/ultimate-upscale-for-automatic1111)  
+    still a popular method for upscaling, but has not been updated nor maintained for a while  
+    so now its modernized and fully integrated as a built-in script!  
 - **Models**
   - [StepFun Step1X-Edit v1.1](https://huggingface.co/stepfun-ai/Step1X-Edit-v1p1-diffusers) image edit model support  
     step1x is a large dedicated image edit model combining qwen-2.5 8B encoder with custom 12.4B transformer  
@@ -73,6 +76,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - detailer `segmentation`, thanks @awsr
   - `ipex` invalid device type
   - cache network thumbnails
+  - `scripts` corrupting control ui state
 
 ## Update for 2026-04-28
 
