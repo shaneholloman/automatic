@@ -253,6 +253,9 @@ def set_pipeline_args(p, model, prompts:list, negative_prompts:list, prompts_2:l
         args['guidance_scale'] = p.cfg_scale
     if 'img_guidance_scale' in possible and hasattr(p, 'image_cfg_scale') and p.image_cfg_scale is not None and p.image_cfg_scale > 0:
         args['img_guidance_scale'] = p.image_cfg_scale
+    if getattr(getattr(model, 'config', None), 'is_distilled', False) and args.get('guidance_scale', 0) > 1 and not getattr(p, 'distilled_warned', False):
+        log.warning(f'Pipeline: cls={model.__class__.__name__} distilled=True cfg_scale={args["guidance_scale"]} ignored, forced to 1')
+        p.distilled_warned = True
     if 'generator' in possible:
         generator = get_generator(p)
         args['generator'] = generator

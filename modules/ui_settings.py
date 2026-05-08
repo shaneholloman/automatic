@@ -146,7 +146,7 @@ def run_settings(*args):
             log.warning(f"OpenVINO: Overriding Torch Compile backend={shared.opts.openvino_compile_backend}")
             shared.opts.cuda_compile_backend = shared.opts.openvino_compile_backend
         if shared.opts.diffusers_offload_mode != "none":
-            log.warning(f"OpenVINO: Overriding diffusers_offload_mode=none")
+            log.warning("OpenVINO: Overriding diffusers_offload_mode=none")
             shared.opts.diffusers_offload_mode = "none"
     if shared.opts.sd_backend != "diffusers":
         log.error('Legacy option: backend=original is no longer supported')

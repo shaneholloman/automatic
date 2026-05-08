@@ -62,10 +62,11 @@ def GradScaler_init(self, device: str = None, init_scale: float = 2.0**16, growt
 original_is_autocast_enabled = torch.is_autocast_enabled
 @wraps(torch.is_autocast_enabled)
 def torch_is_autocast_enabled(device_type=None):
-    if device_type is None or check_cuda(device_type):
-        return original_is_autocast_enabled(return_xpu(device_type))
+    dev = str(device_type) if isinstance(device_type, torch.device) else device_type
+    if dev is None or check_cuda(dev):
+        return original_is_autocast_enabled(return_xpu(dev))
     else:
-        return original_is_autocast_enabled(device_type)
+        return original_is_autocast_enabled(dev)
 
 
 original_get_autocast_dtype = torch.get_autocast_dtype

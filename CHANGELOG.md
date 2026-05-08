@@ -1,8 +1,8 @@
 # Change Log for SD.Next
 
-## Update for 2026-05-07
+## Update for 2026-05-08
 
-### Highlights for 2026-05-07
+### Highlights for 2026-05-08
 
 *What's New?*
 - Image editing models now can work with multiple image inputs!  
@@ -13,7 +13,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
 
 [ReadMe](https://github.com/vladmandic/automatic/blob/master/README.md) | [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md) | [Docs](https://vladmandic.github.io/sdnext-docs/) | [WiKi](https://github.com/vladmandic/automatic/wiki) | [Discord](https://discord.com/invite/sd-next-federal-batch-inspectors-1101998836328697867) | [Sponsor](https://github.com/sponsors/vladmandic)  
 
-### Details for 2026-05-07
+### Details for 2026-05-08
 
 - **Features**
   - **Multi-image** workflows!
@@ -62,13 +62,16 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
 - **Fixes**
   - add missing `jquery` and `sparkline` js scripts
   - save handle already decoded images
-  - ernie-image preview
-  - lora false deactivate
-  - kandinsky-5 t2i/i2i workflows
+  - `ernie-image` preview
+  - `lora` false deactivate
+  - `kandinsky-5` t2i/i2i workflows
   - progress do not timeout when paused
   - faster server shutdown/restart, thanks @awsr
   - `openvino` force offload none
   - `lut` file handling
+  - warn on pipeline ignoring `cfg`
+  - detailer `segmentation`, thanks @awsr
+  - `ipex` invalid device type
 
 ## Update for 2026-04-28
 
