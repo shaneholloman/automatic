@@ -187,7 +187,7 @@ def full_vae_encode(image, model):
         log_debug('Moving to CPU: model=UNet')
         unet_device = model.unet.device
         sd_models.move_model(model.unet, devices.cpu)
-    if not shared.opts.diffusers_offload_mode == "sequential" and hasattr(model, 'vae'):
+    if shared.opts.diffusers_offload_mode != "sequential" and hasattr(model, 'vae'):
         sd_models.move_model(model.vae, devices.device)
     vae_name = sd_vae.loaded_vae_file if sd_vae.loaded_vae_file is not None else "default"
     log_debug(f'Encode vae="{vae_name}" dtype={model.vae.dtype} upcast={model.vae.config.get("force_upcast", None)}')
