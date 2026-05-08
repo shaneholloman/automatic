@@ -6,7 +6,7 @@
 
 *What's New?*
 - Image editing models now can work with multiple image inputs!  
-- New models: *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux* plus enhanced capabilities for *Anima*, *Ernie-Image*, *LTX* and *Chroma* models  
+- New models: *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux* plus enhanced capabilities for *Anima*, *Ernie-Image*, *LTX* and *Chroma* models  
 - UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, and more
 
 For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md)  
@@ -16,7 +16,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
 ### Details for 2026-05-08
 
 - **Features**
-  - **Multi-image** workflows!
+  - **Multi-image** workflows!  
     for models that support multiple images as inputs, you can now add multiple stages in Kanvas  
     prompts like "*place character from first image, add background from second image, render in style from third image*" are now possible  
   - option *inputs -> skip processing* to force images to passed to model as-is without any pre-processing  
@@ -32,26 +32,32 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
     still a popular method for upscaling, but has not been updated nor maintained for a while  
     so now its modernized and fully integrated as a built-in script!  
 - **Models**
-  - [StepFun Step1X-Edit v1.1](https://huggingface.co/stepfun-ai/Step1X-Edit-v1p1-diffusers) image edit model support  
+  - [JoyAI Image Edit](https://huggingface.co/jdopensource/JoyAI-Image-Edit-Diffusers) image-editing model support  
+    includes multimodal conditioning using *Qwen3-VL* with a dedicated *JoyImageEdit* diffusion transformer  
+    *note* this is a large model at 50GB so use of agressive quantization is recommended  
+  - [StepFun Step1X-Edit v1.1](https://huggingface.co/stepfun-ai/Step1X-Edit-v1p1-diffusers) image-editing model support  
     step1x is a large dedicated image edit model combining qwen-2.5 8B encoder with custom 12.4B transformer  
-  - [VIBE Image Edit](https://huggingface.co/iitolstykh/VIBE-Image-Edit) text-guided image editing model  
+  - [VIBE Image Edit](https://huggingface.co/iitolstykh/VIBE-Image-Edit) image-editing model support  
     built on Sana1.5-1.6B diffusion backbone with Qwen3-VL-2B multimodal conditioning  
-    supports both *T2I* and *I2I* workflows, uses multi-scale resolution binning up to 2048px  
+    primarily image-editing model, but supports t2i as well, uses multi-scale resolution binning up to 2048px  
   - [AlphaVLLM Lumina-DiMOO](https://huggingface.co/Alpha-VLLM/Lumina-DiMOO) unified multimodal diffusion model  
     includes *T2I*, *I2I edit*, and *MMU* capabilities in a single pipeline  
-    *note* in addition to normal prompt-based image editing, model also supports special prompts: *dense, canny_pred, control, subject, edit, ref_transfer, multi_view*
-    *note* as with most multi-modal/unified models, it needs higher step count (recommended is 64 steps) and uses quite a lot of VRAM, so use with caution!
-  - [Owen777 UltraFlux-v1](https://huggingface.co/Owen777/UltraFlux-v1) native 4K text-to-image model based on FLUX.1-dev  
-    *note*: UltraFlux is capable of rendering images up to 4K resolution, but it doesnt mean it will do that on any hardware - it will depend on your VRAM!
+    *note* in addition to normal prompt-based image editing, model also supports special prompts: *dense, canny_pred, control, subject, edit, ref_transfer, multi_view*  
+    *note* as with most multi-modal/unified models, it needs higher step count (recommended is 64 steps) and uses quite a lot of VRAM, so use with caution!  
+  - [Owen777 UltraFlux-v1](https://huggingface.co/Owen777/UltraFlux-v1) native 4K text-to-image model based on *FLUX.1-dev*  
+    *note*: UltraFlux is capable of rendering images up to 4K resolution, but it doesnt mean it will do that on any hardware - it will depend on your VRAM!  
 - **UI**
-  - add button to manually reorient input/output panels
-  - all ui panels can be minimized/maximized by clicking on their header  
+  - **Networks** using networks to load model or auto-download a reference model will now be reflected in the UI  
+  - ability to manually reorient *input/output* panels
+  - all ui panels can be *minimized/maximized* by clicking on their header  
     state is preserved across sessions and can be used to hide rarely used panels and declutter the workspace  
   - **Kanvas** re-order stages by clicking on active stage  
     order of stages detemines order of images passed to model  
   - **Kanvas** *magic-wand* tool now works on mask layer and auto-creates mask based on perceptual tolerance  
   - **Gallery** add thumbnail size slider
   - **Gallery** add quick info/download/delete buttons on thumbnail hover
+  - **Models** sortable columns, ability to remove a model  
+    applies to models as well as huggingface cache entries  
 - **Control**
   - remove buttons: *input/control/process*
   - move params *control input type* to control menu section
@@ -77,6 +83,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - `ipex` invalid device type
   - cache network thumbnails
   - `scripts` corrupting control ui state
+  - avoid `callback` duplicate registrations
 
 ## Update for 2026-04-28
 

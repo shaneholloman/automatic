@@ -162,6 +162,8 @@ def guess_by_name(fn, current_guess):
         new_guess = 'Step1X-Edit'
     elif 'vibe-image-edit' in fn.lower():
         new_guess = 'VIBE'
+    elif 'joyai-image-edit' in fn.lower() or 'joy-image-edit' in fn.lower():
+        new_guess = 'Joy'
     if debug_load:
         log.trace(f'Autodetect: method=name file="{fn}" previous="{current_guess}" current="{new_guess}"')
     return new_guess or current_guess

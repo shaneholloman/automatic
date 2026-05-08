@@ -110,6 +110,8 @@ def get_model_type(pipe):
         model_type = 'glmimage'
     elif 'Step1XEdit' in name:
         model_type = 'step1x_edit'
+    elif 'JoyImageEdit' in name:
+        model_type = 'joy'
     elif 'OvisImage' in name or 'Ovis-Image' in name:
         model_type = 'ovis'
     elif 'Wan' in name:

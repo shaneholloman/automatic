@@ -469,6 +469,10 @@ def load_diffuser_force(detected_model_type, checkpoint_info, diffusers_load_con
             from pipelines.model_vibe import load_vibe
             sd_model = load_vibe(checkpoint_info, diffusers_load_config)
             allow_post_quant = False
+        elif model_type in ['Joy']:
+            from pipelines.model_joy import load_joy
+            sd_model = load_joy(checkpoint_info, diffusers_load_config)
+            allow_post_quant = False
         elif model_type in ['Qwen']:
             from pipelines.model_qwen import load_qwen
             sd_model = load_qwen(checkpoint_info, diffusers_load_config)
@@ -1489,3 +1493,13 @@ def save_model(name: str, path: str | None = None, shard: str = "5GB", overwrite
         log.error(f'Save model: path="{model_name}" {e}')
         errors.display(e, 'Save model')
         return f'Error: {e}'
+
+
+def list_hfcache():
+    checkpoints = []
+    for f in os.scandir(shared.opts.hfcache_dir):
+        if not os.path.isdir(f) or not f.name.startswith('models--'):
+            continue
+        checkpoint = CheckpointInfo(filename=f.path, name=path_to_repo(f.name), model_type='hfcache')
+        checkpoints.append(checkpoint)
+    return checkpoints
