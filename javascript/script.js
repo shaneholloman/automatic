@@ -41,12 +41,17 @@ const optionsChangedCallbacks = [];
 let uiCurrentTab = null;
 let uiAfterUpdateTimeout = null;
 
+function registerCallback(queue, callback) {
+  if (queue.includes(callback)) return;
+  queue.push(callback);
+}
+
 function onAfterUiUpdate(callback) {
   if (typeof callback !== 'function') {
     error(`onAfterUiUpdate was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiAfterUpdateCallbacks.push(callback);
+  registerCallback(uiAfterUpdateCallbacks, callback);
 }
 
 function onUiUpdate(callback) {
@@ -54,7 +59,7 @@ function onUiUpdate(callback) {
     error(`onUiUpdate was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiUpdateCallbacks.push(callback);
+  registerCallback(uiUpdateCallbacks, callback);
 }
 
 function onUiLoaded(callback) {
@@ -62,7 +67,7 @@ function onUiLoaded(callback) {
     error(`onUiLoaded was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiLoadedCallbacks.push(callback);
+  registerCallback(uiLoadedCallbacks, callback);
 }
 
 function onUiReady(callback) {
@@ -70,7 +75,7 @@ function onUiReady(callback) {
     error(`onUiReady was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiReadyCallbacks.push(callback);
+  registerCallback(uiReadyCallbacks, callback);
 }
 
 function onUiTabChange(callback) {
@@ -78,7 +83,7 @@ function onUiTabChange(callback) {
     error(`onUiTabChange was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiTabChangeCallbacks.push(callback);
+  registerCallback(uiTabChangeCallbacks, callback);
 }
 
 function onOptionsChanged(callback) {
@@ -86,7 +91,7 @@ function onOptionsChanged(callback) {
     error(`onOptionsChanged was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  optionsChangedCallbacks.push(callback);
+  registerCallback(optionsChangedCallbacks, callback);
 }
 
 function executeCallbacks(queue, arg) {
@@ -221,6 +226,7 @@ async function initTableSorter() {
   const t0 = performance.now();
   const root = gradioApp();
   for (const table of root.querySelectorAll('table[data-sortable="true"]')) {
+    console.log('HERE', table);
     if (!table || table.dataset.sortBound === 'true') return;
     const headers = Array.from(table.querySelectorAll('th.sortable'));
     if (headers.length === 0) return;
