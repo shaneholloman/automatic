@@ -193,7 +193,7 @@ function getSortableCellValue(cell, sortType) {
   return rawValue.toLowerCase();
 }
 
-function sortModelListTable(table, columnIndex, sortType, sortOrder) {
+function sortTable(table, columnIndex, sortType, sortOrder) {
   const tbody = table.querySelector('tbody');
   if (!tbody) return;
   const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -222,38 +222,33 @@ function applySortIndicators(table, activeHeader, sortOrder) {
   activeHeader.setAttribute('aria-sort', sortOrder === 'desc' ? 'descending' : 'ascending');
 }
 
+function handleSortableTableClick(event) {
+  const header = event.target.closest('th.sortable');
+  if (!header) return;
+  const table = header.closest('table[data-sortable="true"]');
+  if (!table) return;
+  const headers = Array.from(table.querySelectorAll('th.sortable'));
+  const columnIndex = headers.indexOf(header);
+  if (columnIndex < 0) return;
+
+  const currentSortKey = table.dataset.sortKey || table.dataset.defaultSortKey;
+  const currentSortOrder = table.dataset.sortOrder || table.dataset.defaultSortOrder || 'asc';
+  const isCurrentHeader = currentSortKey === header.dataset.sortKey;
+  const nextOrder = isCurrentHeader && currentSortOrder === 'asc' ? 'desc' : 'asc';
+
+  table.dataset.sortKey = header.dataset.sortKey;
+  table.dataset.sortOrder = nextOrder;
+  sortTable(table, columnIndex, header.dataset.sortType || 'text', nextOrder);
+  applySortIndicators(table, header, nextOrder);
+}
+
 async function initTableSorter() {
   const t0 = performance.now();
   const root = gradioApp();
-  for (const table of root.querySelectorAll('table[data-sortable="true"]')) {
-    console.log('HERE', table);
-    if (!table || table.dataset.sortBound === 'true') return;
-    const headers = Array.from(table.querySelectorAll('th.sortable'));
-    if (headers.length === 0) return;
-
-    for (const [index, header] of headers.entries()) {
-      header.style.cursor = 'pointer';
-      header.addEventListener('click', () => {
-        const isCurrentHeader = table.dataset.sortKey === header.dataset.sortKey;
-        const nextOrder = isCurrentHeader && table.dataset.sortOrder === 'asc' ? 'desc' : 'asc';
-        table.dataset.sortKey = header.dataset.sortKey;
-        table.dataset.sortOrder = nextOrder;
-        sortModelListTable(table, index, header.dataset.sortType || 'text', nextOrder);
-        applySortIndicators(table, header, nextOrder);
-      });
-    }
-
-    const defaultSortKey = table.dataset.defaultSortKey || 'name';
-    const defaultSortOrder = table.dataset.defaultSortOrder || 'asc';
-    const defaultHeader = headers.find((header) => header.dataset.sortKey === defaultSortKey) || headers[0];
-    const defaultIndex = headers.indexOf(defaultHeader);
-    table.dataset.sortKey = defaultHeader.dataset.sortKey;
-    table.dataset.sortOrder = defaultSortOrder;
-    sortModelListTable(table, defaultIndex, defaultHeader.dataset.sortType || 'text', defaultSortOrder);
-    applySortIndicators(table, defaultHeader, defaultSortOrder);
-    table.dataset.sortBound = 'true';
+  if (!root.dataset.tableSorterBound) {
+    root.addEventListener('click', handleSortableTableClick);
+    root.dataset.tableSorterBound = 'true';
   }
-  onUiUpdate(initTableSorter);
   const t1 = performance.now();
   log('initTableSorter', Math.round(t1 - t0));
   timer('initTableSorter', t1 - t0);
@@ -261,7 +256,7 @@ async function initTableSorter() {
 
 async function deleteFile(filename) {
   if (!filename) return;
-  if (!confirm(`Are you sure you want to delete the object? This action cannot be undone. ${filename}`)) return; // eslint-disable-line no-alert
+  if (!confirm(`Are you sure you want to delete the object - This action cannot be undone? Object: ${filename}`)) return; // eslint-disable-line no-alert
   const res = await authFetch(`${window.api}/delete-file?file=${encodeURIComponent(filename)}`);
   if (!res || res.status !== 200) {
     error('FileDelete', { file: filename, status: res?.status, statusText: res?.statusText });

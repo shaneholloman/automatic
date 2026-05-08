@@ -344,7 +344,7 @@ def get_deletefile(file: str):
     import os
     from pathlib import Path
     allowed_dirs = shared.demo.allowed_paths
-    if not file.strip():
+    if file is None or len(file.strip()) == 0:
         raise HTTPException(status_code=400, detail="file path is required")
     if not any(Path(folder).absolute() in Path(file).absolute().parents for folder in allowed_dirs):
         raise HTTPException(status_code=403, detail=f"file {file}: must be in one of allowed directories")
@@ -360,13 +360,14 @@ def get_deletefile(file: str):
             os.remove(file)
         return {"deleted": f"{file}"}
     except Exception as e:
+        log.error(f'Delete: file="{file}" error: {e}')
         raise HTTPException(status_code=500, detail=f"error deleting file {file}: {str(e)}") from e
 
 def get_deleteimage(file: str):
     import os
     from pathlib import Path
     allowed_dirs = shared.demo.allowed_paths
-    if not file.strip():
+    if file is None or len(file.strip()) == 0:
         raise HTTPException(status_code=400, detail="file path is required")
     if not any(Path(folder).absolute() in Path(file).absolute().parents for folder in allowed_dirs):
         raise HTTPException(status_code=403, detail=f"file {file}: must be in one of allowed directories")
@@ -381,6 +382,7 @@ def get_deleteimage(file: str):
         log.warning(f'Delete: image="{file}"')
         return {"deleted": f"{file}"}
     except Exception as e:
+        log.error(f'Delete: file="{file}" error: {e}')
         raise HTTPException(status_code=500, detail=f"error deleting file {file}: {str(e)}") from e
 
 def get_pnginfo(file: str):

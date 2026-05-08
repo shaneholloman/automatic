@@ -15,10 +15,10 @@ extra_ui = []
 
 def get_folder_size(folder):
     total_size = 0
-    for dirpath, _dirnames, filenames in os.walk(folder):
+    for dirpath, _dirnames, filenames in os.walk(folder, followlinks=False):
         for f in filenames:
             fp = os.path.join(dirpath, f)
-            if os.path.isfile(fp):
+            if not os.path.islink(fp) and os.path.isfile(fp):
                 total_size += os.path.getsize(fp)
     return round(total_size / 1024 / 1024 / 1024, 3)
 
@@ -34,11 +34,12 @@ def update_model_hashes():
 
 def create_models_table(rows: list = []):
     from modules import sd_detect
+    rows = sorted(rows, key=lambda row: str(getattr(row, 'model_name', '')).lower())
     html = """
-        <table class="simple-table sortable-table" data-sortable="true" data-default-sort-key="name" data-default-sort-order="asc">
+        <table class="simple-table sortable-table" data-sortable="true" data-default-sort-key="name" data-default-sort-order="asc" data-sort-key="name" data-sort-order="asc">
             <thead>
                 <tr>
-                    <th class="sortable" data-sort-key="name" data-sort-type="text">Name</th>
+                    <th class="sortable sorted-asc" aria-sort="ascending" data-sort-key="name" data-sort-type="text">Name</th>
                     <th class="sortable" data-sort-key="family" data-sort-type="text">Family</th>
                     <th class="sortable" data-sort-key="type" data-sort-type="text">Type</th>
                     <th class="sortable" data-sort-key="pipeline" data-sort-type="text">Pipeline</th>
@@ -88,7 +89,7 @@ def create_models_table(rows: list = []):
                     <td data-sort-value="{size}">{size:.3f} GB</td>
                     <td data-sort-value="{mtime_sort}">{stat_mtime}</td>
                     <td data-sort-value="{hash_name.lower()}">{hash_name}</td>
-                    <td style="cursor:pointer;" onclick="deleteFile('{escape(str(row.filename))}')">\uf530</td>
+                    <td style="cursor:pointer;" onclick="deleteFile('{escape(str(row.path))}')">\uf530</td>
                 </tr>
             """
         except Exception as e:
@@ -177,10 +178,20 @@ def create_ui():
                     model_list_btn = gr.Button(value="Refresh list", variant='primary')
                     model_checkhash_btn = gr.Button(value="Calculate hashes", variant='secondary')
                 with gr.Row():
-                    model_table = gr.HTML(value=create_models_table(), elem_id="model_list_table")
+                    model_table = gr.HTML(value=create_models_table(), elem_id="model_list_table", elem_classes="scroll-auto")
 
                 model_checkhash_btn.click(fn=update_model_hashes, inputs=[], outputs=[model_table])
                 model_list_btn.click(fn=lambda: create_models_table(list(sd_models.checkpoints_list.values())), inputs=[], outputs=[model_table])
+
+            with gr.Tab(label="Cache List", elem_id="models_cache_tab"):
+                with gr.Row():
+                    gr.HTML('<h2>List models in Hugging Face cache</h2><br>')
+                with gr.Row():
+                    model_cache_btn = gr.Button(value="Refresh list", variant='primary')
+                with gr.Row():
+                    cache_table = gr.HTML(value=create_models_table(), elem_id="model_cache_table", elem_classes="scroll-auto")
+
+                model_cache_btn.click(fn=lambda: create_models_table(sd_models.list_hfcache()), inputs=[], outputs=[cache_table])
 
             with gr.Tab(label="Metadata", elem_id="models_metadata_tab"):
                 from modules.civitai.metadata_civitai import civit_search_metadata, civit_update_metadata

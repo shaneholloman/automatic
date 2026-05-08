@@ -73,6 +73,18 @@ def path_to_repo(checkpoint_info):
     return repo_id
 
 
+def repo_to_path(repo_id):
+    if repo_id.name.startswith('Diffusers'):
+        folder = repo_id[len('Diffusers'):].lstrip('/')
+        folder = 'models--' + repo_id.replace('/', '--')
+        folder = os.path.join(shared.opts.diffusers_dir, repo_id)
+        if os.path.exists(folder):
+            return folder
+    if os.path.exists(repo_id.filename):
+        return repo_id.filename
+    return ''
+
+
 def convert_to_faketensors(tensor):
     try:
         fake_module = torch._subclasses.fake_tensor.FakeTensorMode(allow_non_fake_inputs=True) # pylint: disable=protected-access
