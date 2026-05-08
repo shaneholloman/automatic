@@ -179,6 +179,92 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+function getSortableCellValue(cell, sortType) {
+  const rawValue = cell?.dataset?.sortValue ?? cell?.textContent?.trim() ?? '';
+  if (sortType === 'number') {
+    const numericValue = Number.parseFloat(rawValue);
+    return Number.isNaN(numericValue) ? Number.NEGATIVE_INFINITY : numericValue;
+  }
+  return rawValue.toLowerCase();
+}
+
+function sortModelListTable(table, columnIndex, sortType, sortOrder) {
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const direction = sortOrder === 'desc' ? -1 : 1;
+  const sortedRows = rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const aCell = a.row.children[columnIndex];
+      const bCell = b.row.children[columnIndex];
+      const aValue = getSortableCellValue(aCell, sortType);
+      const bValue = getSortableCellValue(bCell, sortType);
+      if (aValue < bValue) return -1 * direction;
+      if (aValue > bValue) return 1 * direction;
+      return a.index - b.index;
+    });
+  tbody.replaceChildren(...sortedRows.map((item) => item.row));
+}
+
+function applySortIndicators(table, activeHeader, sortOrder) {
+  const headers = table.querySelectorAll('th.sortable');
+  for (const header of headers) {
+    header.classList.remove('sorted-asc', 'sorted-desc');
+    header.removeAttribute('aria-sort');
+  }
+  activeHeader.classList.add(sortOrder === 'desc' ? 'sorted-desc' : 'sorted-asc');
+  activeHeader.setAttribute('aria-sort', sortOrder === 'desc' ? 'descending' : 'ascending');
+}
+
+async function initTableSorter() {
+  const t0 = performance.now();
+  const root = gradioApp();
+  for (const table of root.querySelectorAll('table[data-sortable="true"]')) {
+    if (!table || table.dataset.sortBound === 'true') return;
+    const headers = Array.from(table.querySelectorAll('th.sortable'));
+    if (headers.length === 0) return;
+
+    for (const [index, header] of headers.entries()) {
+      header.style.cursor = 'pointer';
+      header.addEventListener('click', () => {
+        const isCurrentHeader = table.dataset.sortKey === header.dataset.sortKey;
+        const nextOrder = isCurrentHeader && table.dataset.sortOrder === 'asc' ? 'desc' : 'asc';
+        table.dataset.sortKey = header.dataset.sortKey;
+        table.dataset.sortOrder = nextOrder;
+        sortModelListTable(table, index, header.dataset.sortType || 'text', nextOrder);
+        applySortIndicators(table, header, nextOrder);
+      });
+    }
+
+    const defaultSortKey = table.dataset.defaultSortKey || 'name';
+    const defaultSortOrder = table.dataset.defaultSortOrder || 'asc';
+    const defaultHeader = headers.find((header) => header.dataset.sortKey === defaultSortKey) || headers[0];
+    const defaultIndex = headers.indexOf(defaultHeader);
+    table.dataset.sortKey = defaultHeader.dataset.sortKey;
+    table.dataset.sortOrder = defaultSortOrder;
+    sortModelListTable(table, defaultIndex, defaultHeader.dataset.sortType || 'text', defaultSortOrder);
+    applySortIndicators(table, defaultHeader, defaultSortOrder);
+    table.dataset.sortBound = 'true';
+  }
+  onUiUpdate(initTableSorter);
+  const t1 = performance.now();
+  log('initTableSorter', Math.round(t1 - t0));
+  timer('initTableSorter', t1 - t0);
+}
+
+async function deleteFile(filename) {
+  if (!filename) return;
+  if (!confirm(`Are you sure you want to delete the object? This action cannot be undone. ${filename}`)) return; // eslint-disable-line no-alert
+  const res = await authFetch(`${window.api}/delete-file?file=${encodeURIComponent(filename)}`);
+  if (!res || res.status !== 200) {
+    error('FileDelete', { file: filename, status: res?.status, statusText: res?.statusText });
+    return;
+  }
+  const data = await res.json();
+  log('FileDelete', data);
+}
+
 /**
  * checks that a UI element is not in another hidden element or tab content
  */

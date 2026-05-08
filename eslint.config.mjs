@@ -102,6 +102,7 @@ const jsConfig = defineConfig([
         idbPut: 'readonly',
         idbDel: 'readonly',
         idbAdd: 'readonly',
+        initTableSorter: 'readonly',
         idbCount: 'readonly',
         idbFolderCleanup: 'readonly',
         idbClearAll: 'readonly',

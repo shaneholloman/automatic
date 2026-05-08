@@ -1,5 +1,6 @@
 import os
 import inspect
+from html import escape
 from typing import cast
 import gradio as gr
 from modules import errors, sd_models, sd_vae, extras, sd_samplers, ui_symbols, modelstats
@@ -12,6 +13,16 @@ from modules.shared import opts, log
 extra_ui = []
 
 
+def get_folder_size(folder):
+    total_size = 0
+    for dirpath, _dirnames, filenames in os.walk(folder):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            if os.path.isfile(fp):
+                total_size += os.path.getsize(fp)
+    return round(total_size / 1024 / 1024 / 1024, 3)
+
+
 def update_model_hashes():
     from modules import sd_unet, sd_checkpoint
     unets = {}
@@ -20,6 +31,69 @@ def update_model_hashes():
     yield from sd_models.update_model_hashes(unets, model_type='unet')
     yield from sd_models.update_model_hashes(model_type='checkpoint')
 
+
+def create_models_table(rows: list = []):
+    from modules import sd_detect
+    html = """
+        <table class="simple-table sortable-table" data-sortable="true" data-default-sort-key="name" data-default-sort-order="asc">
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort-key="name" data-sort-type="text">Name</th>
+                    <th class="sortable" data-sort-key="family" data-sort-type="text">Family</th>
+                    <th class="sortable" data-sort-key="type" data-sort-type="text">Type</th>
+                    <th class="sortable" data-sort-key="pipeline" data-sort-type="text">Pipeline</th>
+                    <th class="sortable" data-sort-key="size" data-sort-type="number">Size</th>
+                    <th class="sortable" data-sort-key="mtime" data-sort-type="number">MTime</th>
+                    <th class="sortable" data-sort-key="hash" data-sort-type="text">Hash</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {tbody}
+            </tbody>
+        </table>
+    """
+    tbody = ''
+    for row in rows:
+        try:
+            f = row.filename
+            stat_size, stat_mtime = modelstats.stat(f)
+            if os.path.isfile(f):
+                typ = os.path.splitext(f)[1][1:]
+                size = round(stat_size / 1024 / 1024 / 1024, 3)
+            elif os.path.isdir(f):
+                typ = 'diffusers'
+                size = get_folder_size(f)
+            else:
+                typ = 'unknown'
+                size = 0
+            guess = 'Stable Diffusion' # set default guess
+            guess = sd_detect.guess_by_size(f, guess)
+            guess = sd_detect.guess_by_name(f, guess)
+            guess, pipeline = sd_detect.guess_by_diffusers(f, guess)
+            guess = sd_detect.guess_variant(f, guess)
+            pipeline = sd_detect.shared_items.get_pipelines().get(guess, None) if pipeline is None else pipeline
+            model_name = escape(str(row.model_name))
+            pipeline_name = escape(pipeline.__name__ if pipeline else '(unknown)')
+            typ_name = escape(str(typ))
+            guess_name = escape(str(guess))
+            hash_name = escape(str(row.shorthash))
+            mtime_sort = stat_mtime.timestamp() if hasattr(stat_mtime, 'timestamp') else 0
+            tbody += f"""
+                <tr>
+                    <td data-sort-value="{model_name.lower()}">{model_name}</td>
+                    <td data-sort-value="{typ_name.lower()}">{typ_name}</td>
+                    <td data-sort-value="{guess_name.lower()}">{guess_name}</td>
+                    <td data-sort-value="{pipeline_name.lower()}">{pipeline_name}</td>
+                    <td data-sort-value="{size}">{size:.3f} GB</td>
+                    <td data-sort-value="{mtime_sort}">{stat_mtime}</td>
+                    <td data-sort-value="{hash_name.lower()}">{hash_name}</td>
+                    <td style="cursor:pointer;" onclick="deleteFile('{escape(str(row.filename))}')">\uf530</td>
+                </tr>
+            """
+        except Exception as e:
+            log.error(f'Model list: row={vars(row)} {e}')
+    return html.format(tbody=tbody)
 
 def create_ui():
     log.debug('UI initialize: tab=models')
@@ -31,7 +105,7 @@ def create_ui():
 
         with gr.Column(elem_id='models_input_container', scale=3):
 
-            with gr.Tab(label="Current", elem_id="models_current_tab"):
+            with gr.Tab(label="Active Model", elem_id="models_current_tab"):
                 def create_modules_table(rows: list):
                     html = """
                         <table class="simple-table">
@@ -96,61 +170,14 @@ def create_ui():
 
                 model_analyze.click(fn=analyze, inputs=[], outputs=[model_desc, model_meta])
 
-            with gr.Tab(label="List", elem_id="models_list_tab"):
-                def create_models_table(rows: list):
-                    from modules import sd_detect
-                    html = """
-                        <table class="simple-table">
-                            <thead>
-                                <tr><th>Name</th><th>Type</th><th>Detect</th><th>Pipeline</th><th>Hash</th><th>Size</th><th>MTime</th></tr>
-                            </thead>
-                            <tbody>
-                                {tbody}
-                            </tbody>
-                        </table>
-                    """
-                    tbody = ''
-                    for row in rows:
-                        try:
-                            f = row.filename
-                            stat_size, stat_mtime = modelstats.stat(f)
-                            if os.path.isfile(f):
-                                typ = os.path.splitext(f)[1][1:]
-                                size = f"{round(stat_size / 1024 / 1024 / 1024, 3)} gb"
-                            elif os.path.isdir(f):
-                                typ = 'diffusers'
-                                size = 'folder'
-                            else:
-                                typ = 'unknown'
-                                size = 'unknown'
-                            guess = 'Diffusion' # set default guess
-                            guess = sd_detect.guess_by_size(f, guess)
-                            guess = sd_detect.guess_by_name(f, guess)
-                            guess, pipeline = sd_detect.guess_by_diffusers(f, guess)
-                            guess = sd_detect.guess_variant(f, guess)
-                            pipeline = sd_detect.shared_items.get_pipelines().get(guess, None) if pipeline is None else pipeline
-                            tbody += f"""
-                                <tr>
-                                    <td>{row.model_name}</td>
-                                    <td>{typ}</td>
-                                    <td>{guess}</td>
-                                    <td>{pipeline.__name__ if pipeline else '(unknown)'}</td>
-                                    <td>{row.shorthash}</td>
-                                    <td>{size}</td>
-                                    <td>{stat_mtime}</td>
-                                </tr>
-                            """
-                        except Exception as e:
-                            log.error(f'Model list: row={vars(row)} {e}')
-                    return html.format(tbody=tbody)
-
+            with gr.Tab(label="Models List", elem_id="models_list_tab"):
                 with gr.Row():
                     gr.HTML('<h2>List all locally available models</h2><br>')
                 with gr.Row():
-                    model_list_btn = gr.Button(value="List models", variant='primary')
-                    model_checkhash_btn = gr.Button(value="Calculate missing hashes", variant='secondary')
+                    model_list_btn = gr.Button(value="Refresh list", variant='primary')
+                    model_checkhash_btn = gr.Button(value="Calculate hashes", variant='secondary')
                 with gr.Row():
-                    model_table = gr.HTML(value='', elem_id="model_list_table")
+                    model_table = gr.HTML(value=create_models_table(), elem_id="model_list_table")
 
                 model_checkhash_btn.click(fn=update_model_hashes, inputs=[], outputs=[model_table])
                 model_list_btn.click(fn=lambda: create_models_table(list(sd_models.checkpoints_list.values())), inputs=[], outputs=[model_table])

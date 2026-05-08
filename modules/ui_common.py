@@ -97,14 +97,14 @@ def delete_files(js_data, files, all_files, index):
                 os.remove(fn)
                 if fn in all_files:
                     all_files.remove(fn)
-                    log.info(f'Delete: image="{fn}"')
+                    log.warning(f'Delete: image="{fn}"')
                 else:
                     log.warning(f'Delete: image="{fn}" ui mismatch')
             base, _ext = os.path.splitext(fn)
             desc = f'{base}.txt'
             if os.path.exists(desc) and os.path.isfile(desc):
                 os.remove(desc)
-                log.info(f'Delete: text="{fn}"')
+                log.warning(f'Delete: text="{fn}"')
         except Exception as e:
             log.error(f'Delete: file="{fn}" {e}')
     deleted = ', '.join(deleted) if len(deleted) > 0 else 'none'

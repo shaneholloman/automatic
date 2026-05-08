@@ -45,6 +45,8 @@ class CheckpointInfo:
             relname = rel(filename, shared.opts.ckpt_dir)
         elif relname.startswith(shared.opts.diffusers_dir):
             relname = rel(filename, shared.opts.diffusers_dir)
+        elif relname.startswith(shared.opts.hfcache_dir):
+            relname = rel(filename, shared.opts.hfcache_dir)
         elif relname.startswith(model_path):
             relname = rel(filename, model_path)
         elif relname.startswith(paths.script_path):

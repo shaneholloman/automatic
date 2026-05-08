@@ -1,4 +1,6 @@
+from fastapi.exceptions import HTTPException
 from modules import shared
+from modules.logger import log
 from modules.api import models, helpers
 
 
@@ -327,7 +329,6 @@ def get_file(file: str):
     import os
     from pathlib import Path
     from starlette.responses import FileResponse
-    from fastapi.exceptions import HTTPException
     allowed_dirs = shared.demo.allowed_paths
     if not file.strip():
         raise HTTPException(status_code=400, detail="file path is required")
@@ -339,10 +340,31 @@ def get_file(file: str):
         raise HTTPException(status_code=403, detail=f"file {file}: is a directory")
     return FileResponse(file, media_type='application/octet-stream', filename=file)
 
+def get_deletefile(file: str):
+    import os
+    from pathlib import Path
+    allowed_dirs = shared.demo.allowed_paths
+    if not file.strip():
+        raise HTTPException(status_code=400, detail="file path is required")
+    if not any(Path(folder).absolute() in Path(file).absolute().parents for folder in allowed_dirs):
+        raise HTTPException(status_code=403, detail=f"file {file}: must be in one of allowed directories")
+    if not os.path.exists(file):
+        raise HTTPException(status_code=404, detail=f"file not found: {file}")
+    try:
+        if os.path.isdir(file):
+            log.warning(f'Delete: folder="{file}"')
+            import shutil
+            shutil.rmtree(file)
+        else:
+            log.warning(f'Delete: file="{file}"')
+            os.remove(file)
+        return {"deleted": f"{file}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"error deleting file {file}: {str(e)}") from e
+
 def get_deleteimage(file: str):
     import os
     from pathlib import Path
-    from fastapi.exceptions import HTTPException
     allowed_dirs = shared.demo.allowed_paths
     if not file.strip():
         raise HTTPException(status_code=400, detail="file path is required")
@@ -356,6 +378,7 @@ def get_deleteimage(file: str):
         raise HTTPException(status_code=403, detail=f"file {file}: not an image file")
     try:
         os.remove(file)
+        log.warning(f'Delete: image="{file}"')
         return {"deleted": f"{file}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"error deleting file {file}: {str(e)}") from e
@@ -365,7 +388,6 @@ def get_pnginfo(file: str):
     import os
     from pathlib import Path
     from PIL import Image
-    from fastapi.exceptions import HTTPException
     from modules import images, infotext
     allowed_dirs = shared.demo.allowed_paths
     if not file.strip():

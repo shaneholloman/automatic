@@ -50,6 +50,7 @@ async function initStartup() {
   startupPromises.push(initAccordions());
   startupPromises.push(initSettings());
   startupPromises.push(initImageViewer());
+  startupPromises.push(initGallery());
   startupPromises.push(initiGenerationParams());
   startupPromises.push(initChangelog());
   startupPromises.push(setupControlUI());
@@ -80,6 +81,7 @@ async function initStartup() {
   startupPromises.push(applyStyles());
   startupPromises.push(initIndexDB());
   startupPromises.push(initLogMonitor());
+  startupPromises.push(initTableSorter());
 
   t1 = performance.now();
   log('initStartup', Math.round(1000 * (t1 - t0) / 1000000));
