@@ -72,6 +72,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - warn on pipeline ignoring `cfg`
   - detailer `segmentation`, thanks @awsr
   - `ipex` invalid device type
+  - cache network thumbnails
 
 ## Update for 2026-04-28
 
