@@ -634,6 +634,7 @@ function selectCheckpoint(name) {
   else gradioApp().getElementById('change_checkpoint').click();
   log(`selectCheckpoint ${isRefiner ? 'refiner' : 'model'}: ${desiredCheckpointName}`);
   markSelectedCards([desiredCheckpointName], 'model');
+  setTimeout(requestProgress, 250);
 }
 
 let desiredVAEName = null;
@@ -657,6 +658,7 @@ function selectReference(name) {
   desiredCheckpointName = name;
   gradioApp().getElementById('change_reference').click();
   markSelectedCards([desiredCheckpointName], 'model');
+  setTimeout(requestProgress, 250);
 }
 
 function currentImageResolutionimg2img(_a, _b, scaleBy) {

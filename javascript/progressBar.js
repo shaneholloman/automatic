@@ -81,8 +81,8 @@ function randomId() {
 
 // starts sending progress requests to "/internal/progress" uri, creating progressbar above progressbarContainer element and preview inside gallery element
 // Cleans up all created stuff when the task is over and calls atEnd. calls onProgress every time there is a progress update
-function requestProgress(id_task, progressEl, galleryEl, atEnd = null, onProgress = null, once = false) {
-  localStorage.setItem('task', id_task);
+function requestProgress(id_task = 'undefined', progressEl = null, galleryEl = null, atEnd = null, onProgress = null, once = false) {
+  if (id_task) localStorage.setItem('task', id_task);
   let hasStarted = false;
   let dateStart = new Date();
   let prevProgress = null;
@@ -141,12 +141,12 @@ function requestProgress(id_task, progressEl, galleryEl, atEnd = null, onProgres
     const request_id = document.hidden ? -1 : id_live_preview;
 
     const onProgressHandler = (res) => {
-      if (res?.debug) debug('livePreview:', dateStart, request_id, res);
+      if (res?.debug) debug('progress:', { start: dateStart, id: request_id, res });
       lastState = res;
       const elapsedFromStart = (new Date() - dateStart) / 1000;
       hasStarted |= res.active;
       if (res.completed || (!res.active && (hasStarted || once)) || (elapsedFromStart > progressTimeout && !res.queued && res.progress === prevProgress)) {
-        debug('livePreview end:', res);
+        debug('progress', { end: res });
         if (!res.paused) done(); // only abort if not paused
         return;
       }
@@ -165,12 +165,12 @@ function requestProgress(id_task, progressEl, galleryEl, atEnd = null, onProgres
     };
 
     const onProgressErrorHandler = (err) => {
-      error(`livePreview: ${err}`);
+      error('progress', { error: err });
       done();
     };
 
     xhrPost('./internal/progress', { id_task, id_live_preview: request_id }, onProgressHandler, onProgressErrorHandler, false, 30000);
   };
-  debug('livePreview start:', dateStart);
+  debug('progress', { start: dateStart });
   start(id_task, 0);
 }
