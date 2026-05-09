@@ -59,7 +59,7 @@ def warn_once(msg, variant=None):
 def get_model(model_cls, variant=None):
     if variant is not None:
         pass
-    elif model_cls in {'ldm', 'pixartalpha'}:
+    if model_cls in {'sd', 'sdxl', 'ldm', 'pixartalpha'}:
         model_cls = 'sd'
         variant = shared.opts.taesd_variant
     elif model_cls in {'pixartsigma', 'hunyuandit', 'omnigen', 'auraflow'}:
@@ -89,7 +89,6 @@ def load_model(model_type = 'decoder', variant = None):
     if model_cls is None or model_cls == 'none':
         return None, variant
     model_cls, variant = get_model(model_cls, variant)
-    print('HERE', model_cls, variant)
     if model_cls is None or variant is None:
         return None, variant
     folder = os.path.join(paths.models_path, "TAESD")
