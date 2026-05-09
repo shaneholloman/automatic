@@ -38,7 +38,7 @@ import time
 import torch
 from modules import shared, sd_models
 from modules.logger import log
-from modules.lora import network, network_lora, network_lokr, lora_convert
+from modules.lora import network, network_lora, network_lokr, network_hada, lora_convert
 from modules.lora import lora_common as l
 
 
@@ -72,9 +72,16 @@ LOKR_SUFFIXES = (
     ".lokr_t2",
     ".alpha", ".dora_scale", ".bias", ".scale",
 )
+LOHA_SUFFIXES = (
+    ".hada_w1_a", ".hada_w1_b",
+    ".hada_w2_a", ".hada_w2_b",
+    ".hada_t1",   ".hada_t2",
+    ".alpha", ".dora_scale", ".bias", ".scale",
+)
 
 LORA_MARKERS = (".lora_down.weight", ".lora_up.weight", ".lora_A.weight", ".lora_B.weight")
 LOKR_MARKERS = (".lokr_w1", ".lokr_w2")
+LOHA_MARKERS = (".hada_w1_a", ".hada_w1_b", ".hada_w2_a", ".hada_w2_b")
 
 
 # === BFL → diffusers mapping ===
@@ -369,6 +376,52 @@ def try_load_lokr(name, network_on_disk, lora_scale):
                 net.modules[network_key] = network_lokr.NetworkModuleLokr(net, nw)
 
     return finalize_network(net, name, 'LoKR', lora_scale, t0, unmapped=unmapped)
+
+
+def try_load_loha(name, network_on_disk, lora_scale):
+    """Load a Flux2/Klein LoHA (Hadamard product) adapter as native modules.
+
+    Standard non-Tucker LoHA on fused QKV in double_blocks is supported via
+    :class:`NetworkModuleHadaChunk`, which slices ``w1a``/``w2a`` at the
+    chunk's row range and computes the partial Hadamard. Tucker
+    (CP-decomposed) LoHAs are skipped on fused targets because the chunk
+    class does not implement the CP path; non-fused Tucker LoHAs go through
+    the standard :class:`NetworkModuleHada`.
+    """
+    t0 = time.time()
+    state_dict = sd_models.read_state_dict(network_on_disk.filename, what='network')
+    if not has_marker(state_dict, LOHA_MARKERS):
+        return None
+
+    mapping = resolve_mapping()
+    net = new_network(name, network_on_disk)
+    groups = group_by_suffixes(state_dict, LOHA_SUFFIXES)
+
+    unmapped = 0
+    skipped = 0
+    for (prefix, base), w in groups.items():
+        if not all(k in w for k in ('hada_w1_a', 'hada_w1_b', 'hada_w2_a', 'hada_w2_b')):
+            continue
+        is_tucker = 'hada_t1' in w or 'hada_t2' in w
+        targets = resolve_targets(prefix, base)
+        is_fused = any(t[1] is not None for t in targets)
+        if is_fused and is_tucker:
+            log.warning(f'Network load: type=LoHA name="{name}" key={base} Tucker fused QKV skipped (unsupported)')
+            skipped += 1
+            continue
+        for diffusers_path, chunk_idx, num_chunks in targets:
+            network_key = "lora_transformer_" + diffusers_path.replace(".", "_")
+            sd_module = mapping.get(network_key)
+            if sd_module is None:
+                unmapped += 1
+                continue
+            nw = network.NetworkWeights(network_key=network_key, sd_key=network_key, w=w, sd_module=sd_module)
+            if chunk_idx is not None:
+                net.modules[network_key] = network_hada.NetworkModuleHadaChunk(net, nw, chunk_idx, num_chunks)
+            else:
+                net.modules[network_key] = network_hada.NetworkModuleHada(net, nw)
+
+    return finalize_network(net, name, 'LoHA', lora_scale, t0, unmapped=unmapped, skipped=skipped)
 
 
 # === Diffusers-PEFT path helpers (used when lora_force_diffusers is on) ===
