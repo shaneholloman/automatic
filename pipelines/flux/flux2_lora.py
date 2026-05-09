@@ -38,7 +38,10 @@ import time
 import torch
 from modules import shared, sd_models
 from modules.logger import log
-from modules.lora import network, network_lora, network_lokr, network_hada, network_oft, network_ia3, network_glora, network_norm, lora_convert
+from modules.lora import (
+    network, network_lora, network_lokr, network_hada, network_oft,
+    network_ia3, network_glora, network_norm, network_full, lora_convert,
+)
 from modules.lora import lora_common as l
 
 
@@ -95,6 +98,10 @@ NORM_SUFFIXES = (
     ".w_norm", ".b_norm",
     ".alpha", ".scale",
 )
+FULL_SUFFIXES = (
+    ".diff", ".diff_b",
+    ".alpha", ".scale",
+)
 
 LORA_MARKERS = (".lora_down.weight", ".lora_up.weight", ".lora_A.weight", ".lora_B.weight")
 LOKR_MARKERS = (".lokr_w1", ".lokr_w2")
@@ -103,6 +110,7 @@ OFT_MARKERS = (".oft_blocks", ".oft_diag")
 IA3_MARKERS = (".on_input",)  # NOT .weight — too generic, overlaps every other family
 GLORA_MARKERS = (".a1.weight", ".a2.weight", ".b1.weight", ".b2.weight")
 NORM_MARKERS = (".w_norm",)
+FULL_MARKERS = (".diff",)
 
 
 # === BFL → diffusers mapping ===
@@ -634,6 +642,51 @@ def try_load_norm(name, network_on_disk, lora_scale):
             net.modules[network_key] = network_norm.NetworkModuleNorm(net, nw)
 
     return finalize_network(net, name, 'Norm', lora_scale, t0, unmapped=unmapped)
+
+
+def try_load_full(name, network_on_disk, lora_scale):
+    """Load a Flux2/Klein Full (full-rank) adapter as native modules.
+
+    Full adapters carry a complete weight delta (``diff``, same shape as the
+    host weight) and an optional bias delta (``diff_b``) via
+    :class:`NetworkModuleFull`. Most realistic use: small per-block bias-only
+    adjustments in distillation LoRAs.
+
+    Fused QKV in double_blocks is skipped with a warning. Full's ``diff`` has
+    the host weight's full shape; row-slicing across three projections is
+    well-defined arithmetically but no chunk class exists and zero
+    real-world Full-on-fused-DiT files exist. Single-block linear1 (a single
+    fused diffusers module) and non-QKV double-block targets work fully.
+    """
+    t0 = time.time()
+    state_dict = sd_models.read_state_dict(network_on_disk.filename, what='network')
+    if not has_marker(state_dict, FULL_MARKERS):
+        return None
+
+    mapping = resolve_mapping()
+    net = new_network(name, network_on_disk)
+    groups = group_by_suffixes(state_dict, FULL_SUFFIXES)
+
+    unmapped = 0
+    skipped = 0
+    for (prefix, base), w in groups.items():
+        if 'diff' not in w:
+            continue
+        targets = resolve_targets(prefix, base)
+        if any(t[1] is not None for t in targets):
+            log.warning(f'Network load: type=Full name="{name}" key={base} fused QKV skipped (unsupported)')
+            skipped += 1
+            continue
+        for diffusers_path, _, _ in targets:
+            network_key = "lora_transformer_" + diffusers_path.replace(".", "_")
+            sd_module = mapping.get(network_key)
+            if sd_module is None:
+                unmapped += 1
+                continue
+            nw = network.NetworkWeights(network_key=network_key, sd_key=network_key, w=w, sd_module=sd_module)
+            net.modules[network_key] = network_full.NetworkModuleFull(net, nw)
+
+    return finalize_network(net, name, 'Full', lora_scale, t0, unmapped=unmapped, skipped=skipped)
 
 
 # === Diffusers-PEFT path helpers (used when lora_force_diffusers is on) ===
