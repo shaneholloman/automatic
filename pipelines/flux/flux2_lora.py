@@ -32,6 +32,23 @@ Per-family fused-QKV handling:
   warning.
 - Norm: targets 1-D LayerNorm/RMSNorm parameters; never fused.
 
+LyCORIS algorithm coverage relative to upstream
+``KohakuBlueleaf/LyCORIS/lycoris/modules/``:
+
+- Native: LoRA, LoKR, LoHA, OFT, BOFT, IA3, GLoRA, Norm, Full.
+- Saved as standard LoRA: LoCon and DyLoRA. Both ``custom_state_dict``
+  outputs collapse to ``lora_up.weight``/``lora_down.weight``/``alpha``
+  (LoCon bakes its ``scalar`` into ``lora_up``; DyLoRA concats its
+  per-block slabs into a max-rank matrix), so ``try_load_lora`` loads
+  them losslessly relative to upstream's own export.
+- Deferred: TLoRA. The file saves only ``q_layer.weight`` /
+  ``p_layer.weight`` / ``lambda_layer`` / ``alpha``; the base SVD
+  reference (``base_q`` / ``base_p`` / ``base_lambda``) that the
+  delta math subtracts is unsaved by upstream design and the
+  ``sig_type`` selection mode is unrecoverable from the file, so
+  any loader has a silent-correctness gap for ``sig_type != 'principal'``.
+  Files fail cleanly with "not loaded".
+
 Diffusers-PEFT fallback (used when ``lora_force_diffusers`` is on) is preserved
 via :func:`apply_patch`, which monkey-patches ``Flux2LoraLoaderMixin.lora_state_dict``
 to inject the ``diffusion_model.`` prefix for bare-BFL keys and bake kohya
@@ -44,7 +61,7 @@ import torch
 from modules import shared, sd_models
 from modules.logger import log
 from modules.lora import (
-    network, network_lora, network_lokr, network_hada, network_oft,
+    network, network_lora, network_lokr, network_hada, network_oft, network_boft,
     network_ia3, network_glora, network_norm, network_full, lora_convert,
 )
 from modules.lora import lora_common as l
@@ -542,15 +559,24 @@ def try_load_loha(name, network_on_disk, lora_scale):
 
 
 def try_load_oft(name, network_on_disk, lora_scale):
-    """Load a Flux2/Klein OFT (Orthogonal Fine-Tuning) adapter as native modules.
+    """Load a Flux2/Klein OFT or BOFT adapter as native modules.
 
-    Both kohya (``oft_blocks`` + alpha-as-constraint) and LyCORIS
-    (``oft_diag``) layouts are recognized via :class:`NetworkModuleOFT`.
-    Fused QKV in double_blocks is skipped with a warning: an OFT block
-    structure is tied to the target module's ``out_features``, so a per-Q/K/V
-    split would require re-deriving the rotation per chunk and is not a
-    drop-in. Single-block linear1 (a single fused diffusers module) and all
-    non-QKV double-block targets work fully.
+    Both algorithms share the ``oft_blocks`` save key and are discriminated
+    by tensor dimensionality, mirroring LyCORIS's own ``algo_check``:
+
+    - **OFT** — 3-D ``(num_blocks, block_size, block_size)``. Both kohya
+      (``oft_blocks`` + alpha-as-constraint) and LyCORIS (``oft_diag``)
+      layouts route through :class:`NetworkModuleOFT`.
+    - **BOFT** — 4-D ``(boft_m, block_num, block_size, block_size)``,
+      a cascade of butterfly factors. Routes through
+      :class:`NetworkModuleBOFT` which ports the butterfly-cascade
+      ``make_weight`` from LyCORIS boft.py.
+
+    Fused QKV in double_blocks is skipped with a warning for both: an OFT
+    block structure (and BOFT's per-stage block partition) is tied to the
+    target module's ``out_features``, so a per-Q/K/V split would require
+    re-deriving the rotations per chunk. Single-block ``linear1`` (a single
+    fused diffusers module) and all non-QKV double-block targets work fully.
     """
     t0 = time.time()
     state_dict = sd_models.read_state_dict(network_on_disk.filename, what='network')
@@ -566,9 +592,10 @@ def try_load_oft(name, network_on_disk, lora_scale):
     for (prefix, base), w in groups.items():
         if not ('oft_blocks' in w or 'oft_diag' in w):
             continue
+        is_boft = 'oft_blocks' in w and w['oft_blocks'].ndim == 4
         targets = resolve_targets(prefix, base)
         if any(t[1] is not None for t in targets):
-            log.warning(f'Network load: type=OFT name="{name}" key={base} fused QKV skipped (unsupported)')
+            log.warning(f'Network load: type={"BOFT" if is_boft else "OFT"} name="{name}" key={base} fused QKV skipped (unsupported)')
             skipped += 1
             continue
         for diffusers_path, _, _ in targets:
@@ -578,7 +605,10 @@ def try_load_oft(name, network_on_disk, lora_scale):
                 unmapped += 1
                 continue
             nw = network.NetworkWeights(network_key=network_key, sd_key=network_key, w=w, sd_module=sd_module)
-            net.modules[network_key] = network_oft.NetworkModuleOFT(net, nw)
+            if is_boft:
+                net.modules[network_key] = network_boft.NetworkModuleBOFT(net, nw)
+            else:
+                net.modules[network_key] = network_oft.NetworkModuleOFT(net, nw)
 
     return finalize_network(net, name, 'OFT', lora_scale, t0, unmapped=unmapped, skipped=skipped)
 
