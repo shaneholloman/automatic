@@ -38,7 +38,7 @@ import time
 import torch
 from modules import shared, sd_models
 from modules.logger import log
-from modules.lora import network, network_lora, network_lokr, network_hada, lora_convert
+from modules.lora import network, network_lora, network_lokr, network_hada, network_oft, lora_convert
 from modules.lora import lora_common as l
 
 
@@ -78,10 +78,15 @@ LOHA_SUFFIXES = (
     ".hada_t1",   ".hada_t2",
     ".alpha", ".dora_scale", ".bias", ".scale",
 )
+OFT_SUFFIXES = (
+    ".oft_blocks", ".oft_diag",
+    ".alpha", ".dora_scale", ".bias", ".scale",
+)
 
 LORA_MARKERS = (".lora_down.weight", ".lora_up.weight", ".lora_A.weight", ".lora_B.weight")
 LOKR_MARKERS = (".lokr_w1", ".lokr_w2")
 LOHA_MARKERS = (".hada_w1_a", ".hada_w1_b", ".hada_w2_a", ".hada_w2_b")
+OFT_MARKERS = (".oft_blocks", ".oft_diag")
 
 
 # === BFL → diffusers mapping ===
@@ -422,6 +427,48 @@ def try_load_loha(name, network_on_disk, lora_scale):
                 net.modules[network_key] = network_hada.NetworkModuleHada(net, nw)
 
     return finalize_network(net, name, 'LoHA', lora_scale, t0, unmapped=unmapped, skipped=skipped)
+
+
+def try_load_oft(name, network_on_disk, lora_scale):
+    """Load a Flux2/Klein OFT (Orthogonal Fine-Tuning) adapter as native modules.
+
+    Both kohya (``oft_blocks`` + alpha-as-constraint) and LyCORIS
+    (``oft_diag``) layouts are recognized via :class:`NetworkModuleOFT`.
+    Fused QKV in double_blocks is skipped with a warning: an OFT block
+    structure is tied to the target module's ``out_features``, so a per-Q/K/V
+    split would require re-deriving the rotation per chunk and is not a
+    drop-in. Single-block linear1 (a single fused diffusers module) and all
+    non-QKV double-block targets work fully.
+    """
+    t0 = time.time()
+    state_dict = sd_models.read_state_dict(network_on_disk.filename, what='network')
+    if not has_marker(state_dict, OFT_MARKERS):
+        return None
+
+    mapping = resolve_mapping()
+    net = new_network(name, network_on_disk)
+    groups = group_by_suffixes(state_dict, OFT_SUFFIXES)
+
+    unmapped = 0
+    skipped = 0
+    for (prefix, base), w in groups.items():
+        if not ('oft_blocks' in w or 'oft_diag' in w):
+            continue
+        targets = resolve_targets(prefix, base)
+        if any(t[1] is not None for t in targets):
+            log.warning(f'Network load: type=OFT name="{name}" key={base} fused QKV skipped (unsupported)')
+            skipped += 1
+            continue
+        for diffusers_path, _, _ in targets:
+            network_key = "lora_transformer_" + diffusers_path.replace(".", "_")
+            sd_module = mapping.get(network_key)
+            if sd_module is None:
+                unmapped += 1
+                continue
+            nw = network.NetworkWeights(network_key=network_key, sd_key=network_key, w=w, sd_module=sd_module)
+            net.modules[network_key] = network_oft.NetworkModuleOFT(net, nw)
+
+    return finalize_network(net, name, 'OFT', lora_scale, t0, unmapped=unmapped, skipped=skipped)
 
 
 # === Diffusers-PEFT path helpers (used when lora_force_diffusers is on) ===
