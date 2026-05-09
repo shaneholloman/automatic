@@ -331,9 +331,9 @@ def network_load(names, te_multipliers=None, unet_multipliers=None, dyn_dims=Non
                 lora_module = lora_modules[i] if lora_modules and len(lora_modules) > i else None
                 if recompile_model and shared.compiled_model_state is not None:
                     shared.compiled_model_state.lora_model.append(f"{name}:{lora_scale}")
-                lora_method = lora_overrides.get_method(shorthash)
+                lora_method, lora_method_reason = lora_overrides.get_method(shorthash)
                 if lora_method == 'diffusers':
-                    net = lora_diffusers.load_diffusers(name, network_on_disk, lora_scale, lora_module)
+                    net = lora_diffusers.load_diffusers(name, network_on_disk, lora_scale, lora_module, reason=lora_method_reason)
                 elif lora_method == 'nunchaku':
                     pass # handled directly from extra_networks_lora.load_nunchaku
                 else:
