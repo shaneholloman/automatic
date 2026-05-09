@@ -6,8 +6,13 @@ sdnext's existing ``network_layer_mapping``, returning a ``Network`` populated
 with ``NetworkModule*`` entries that ``network_activate`` will apply.
 
 Recognized key prefixes for every family: ``diffusion_model.``,
-``transformer.``, ``lora_unet_``, or bare BFL (no prefix). Diffusers-PEFT
-``lora_A``/``lora_B`` are normalized to ``lora_down``/``lora_up``.
+``transformer.``, ``lora_unet_``, ``lycoris_``, ``base_model.model.``
+(PEFT save wrapper), bare BFL paths (e.g. ``double_blocks.``), and bare
+diffusers paths (``transformer_blocks.`` / ``single_transformer_blocks.``,
+produced by ``Flux2Transformer2DModel.save_lora_adapter()``). Diffusers-PEFT
+``lora_A``/``lora_B`` are normalized to ``lora_down``/``lora_up`` and a
+``.<adapter_name>.`` infix between the suffix and ``.weight`` (e.g.
+``.lora_A.default.weight``) is stripped to match the standard suffix table.
 
 BFL/kohya keys are mapped to diffusers paths via ``F2_SINGLE_MAP`` /
 ``F2_DOUBLE_MAP`` / ``F2_QKV_MAP``. Fused QKV in double_blocks is split into
@@ -47,13 +52,30 @@ from modules.lora import lora_common as l
 
 # === Format detection ===
 
-KNOWN_PREFIXES = ("diffusion_model.", "transformer.", "lora_unet_")
+# Prefixes we recognize as the "true" format-identifying prefix on a state-dict
+# key. The PEFT save wrapper ``base_model.model.`` is handled separately as a
+# pre-strip step (see :func:`_unwrap_peft_wrapper`) because it can wrap any of
+# the prefixes below — peft.save_pretrained prepends it indiscriminately.
+#
+# - ``diffusion_model.`` — AI-toolkit / BFL native (e.g. ostris/ai-toolkit)
+# - ``transformer.``      — diffusers PEFT in-memory (e.g. HF DreamBooth scripts)
+# - ``lora_unet_``        — kohya-ss/sd-scripts standard
+# - ``lycoris_``          — LyCORIS-standalone save (e.g. SimpleTuner LoKR);
+#                           the path under this prefix is an underscore-rendered
+#                           diffusers path, not a BFL path
+KNOWN_PREFIXES = ("diffusion_model.", "transformer.", "lora_unet_", "lycoris_")
 
 BARE_FLUX_PREFIXES = (
     "single_blocks.", "double_blocks.", "img_in.", "txt_in.",
     "final_layer.", "time_in.", "single_stream_modulation.",
     "double_stream_modulation_",
 )
+
+# Bare diffusers paths (no wrapping prefix) — produced by
+# ``Flux2Transformer2DModel.save_lora_adapter()`` after attaching a PEFT adapter.
+# These are already-diffusers paths and pass through ``resolve_targets`` verbatim.
+BARE_DIFFUSERS_PREFIXES = ("single_transformer_blocks.", "transformer_blocks.")
+BARE_DIFFUSERS_PREFIX_USED = "bare_diffusers"  # sentinel value for ``parse_key`` return
 
 SUFFIX_NORMALIZE = {
     "lora_A.weight": "lora_down.weight",
@@ -103,7 +125,13 @@ FULL_SUFFIXES = (
     ".alpha", ".scale",
 )
 
-LORA_MARKERS = (".lora_down.weight", ".lora_up.weight", ".lora_A.weight", ".lora_B.weight")
+LORA_MARKERS = (
+    ".lora_down.weight", ".lora_up.weight",
+    ".lora_A.weight", ".lora_B.weight",
+    # PEFT named-adapter saves embed the slot name as ``.lora_A.<name>.weight``;
+    # the trailing-dot forms catch every variant.
+    ".lora_A.", ".lora_B.",
+)
 LOKR_MARKERS = (".lokr_w1", ".lokr_w2")
 LOHA_MARKERS = (".hada_w1_a", ".hada_w1_b", ".hada_w2_a", ".hada_w2_b")
 OFT_MARKERS = (".oft_blocks", ".oft_diag")
@@ -200,13 +228,59 @@ def shapes_match(sd_module, down_w: torch.Tensor, up_w: torch.Tensor) -> bool:
     return down_w.shape[1] == mod_shape[1] and up_w.shape[0] == mod_shape[0]
 
 
+def _unwrap_peft_wrapper(key):
+    """Strip the ``base_model.model.`` prefix added by ``peft.save_pretrained``.
+
+    PeftModel.save_pretrained prepends this wrapper to every adapter key. The
+    content underneath can be any of the formats KNOWN_PREFIXES already handle:
+
+    - BFL keys (e.g. fal/flux-2-klein-4B-outpaint-lora:
+      ``base_model.model.double_blocks.0.img_attn.proj.lora_A.weight``)
+    - Diffusers paths under ``transformer.`` (HF DreamBooth scripts that
+      target diffusers modules and let peft wrap them)
+    - Bare-BFL keys (rare but possible)
+
+    Stripping the wrapper once is enough; the rest of :func:`parse_key` then
+    matches the unwrapped key against KNOWN_PREFIXES or the bare-BFL fallback
+    normally. Mirrors the diffusers ``Flux2LoraLoaderMixin.lora_state_dict``
+    behavior at lora_pipeline.py:5684-5686, which renames the prefix to
+    ``diffusion_model.`` before feeding the key to the AI-toolkit converter.
+    """
+    if key.startswith("base_model.model."):
+        return key[len("base_model.model."):]
+    return key
+
+
+def _strip_peft_adapter_name(key):
+    """Normalize ``.lora_[AB].<adapter_name>.weight`` to ``.lora_[AB].weight``.
+
+    ``peft.PeftModel`` and the diffusers ``save_lora_adapter`` exporter embed the
+    adapter slot name into the saved key (``"default"`` when not explicitly
+    set). Strip a single non-dotted name segment so the suffix table matches
+    without listing every plausible adapter name.
+    """
+    for inner in (".lora_A.", ".lora_B."):
+        idx = key.find(inner)
+        if idx == -1:
+            continue
+        rest = key[idx + len(inner):]
+        if rest == "weight" or not rest.endswith(".weight"):
+            continue
+        adapter_name = rest[:-len(".weight")]
+        if adapter_name and "." not in adapter_name:
+            return key[:idx] + inner + "weight"
+    return key
+
+
 def parse_key(key, suffixes):
     """Return ``(prefix_used, base, suffix_normalized)`` or ``None``.
 
     ``prefix_used`` is the matched ``KNOWN_PREFIXES`` element, or ``None`` for
-    bare BFL keys. ``base`` is the format-native module path (kohya
-    underscore-style or BFL/diffusers dot-style depending on prefix).
+    bare BFL keys. ``base`` is the format-native module path (kohya / lycoris
+    underscore-style or BFL / diffusers dot-style depending on prefix).
     """
+    key = _unwrap_peft_wrapper(key)
+    key = _strip_peft_adapter_name(key)
     prefix_used = None
     stripped = key
     for p in KNOWN_PREFIXES:
@@ -215,7 +289,9 @@ def parse_key(key, suffixes):
             stripped = key[len(p):]
             break
     if prefix_used is None:
-        if not any(key.startswith(p) for p in BARE_FLUX_PREFIXES):
+        if any(key.startswith(p) for p in BARE_DIFFUSERS_PREFIXES):
+            prefix_used = BARE_DIFFUSERS_PREFIX_USED
+        elif not any(key.startswith(p) for p in BARE_FLUX_PREFIXES):
             return None
 
     matched_suffix = None
@@ -269,6 +345,18 @@ def resolve_targets(prefix_used, base):
     if prefix_used in (None, 'diffusion_model.'):
         return _bfl_to_diffusers_targets(base)
     if prefix_used == 'transformer.':
+        return [(base, None, None)]
+    if prefix_used == BARE_DIFFUSERS_PREFIX_USED:
+        # Already-diffusers path with no wrapping prefix (e.g. produced by
+        # Flux2Transformer2DModel.save_lora_adapter()). Pass through verbatim.
+        return [(base, None, None)]
+    if prefix_used == 'lycoris_':
+        # base is an already-underscored diffusers path (e.g.
+        # 'transformer_blocks_0_attn_add_k_proj'). The caller's network_key
+        # construction does base.replace('.', '_'); for already-underscored
+        # paths that's a no-op, so the network_key matches the entry stamped
+        # by lora_convert.assign_network_names_to_compvis_modules
+        # (e.g. 'lora_transformer_transformer_blocks_0_attn_add_k_proj').
         return [(base, None, None)]
     return []
 
