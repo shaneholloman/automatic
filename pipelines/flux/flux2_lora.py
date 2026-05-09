@@ -38,7 +38,7 @@ import time
 import torch
 from modules import shared, sd_models
 from modules.logger import log
-from modules.lora import network, network_lora, network_lokr, network_hada, network_oft, network_ia3, network_glora, lora_convert
+from modules.lora import network, network_lora, network_lokr, network_hada, network_oft, network_ia3, network_glora, network_norm, lora_convert
 from modules.lora import lora_common as l
 
 
@@ -91,6 +91,10 @@ GLORA_SUFFIXES = (
     ".b1.weight", ".b2.weight",
     ".alpha", ".dora_scale", ".scale",
 )
+NORM_SUFFIXES = (
+    ".w_norm", ".b_norm",
+    ".alpha", ".scale",
+)
 
 LORA_MARKERS = (".lora_down.weight", ".lora_up.weight", ".lora_A.weight", ".lora_B.weight")
 LOKR_MARKERS = (".lokr_w1", ".lokr_w2")
@@ -98,6 +102,7 @@ LOHA_MARKERS = (".hada_w1_a", ".hada_w1_b", ".hada_w2_a", ".hada_w2_b")
 OFT_MARKERS = (".oft_blocks", ".oft_diag")
 IA3_MARKERS = (".on_input",)  # NOT .weight — too generic, overlaps every other family
 GLORA_MARKERS = (".a1.weight", ".a2.weight", ".b1.weight", ".b2.weight")
+NORM_MARKERS = (".w_norm",)
 
 
 # === BFL → diffusers mapping ===
@@ -571,6 +576,64 @@ def try_load_glora(name, network_on_disk, lora_scale):
             net.modules[network_key] = network_glora.NetworkModuleGLora(net, nw)
 
     return finalize_network(net, name, 'GLoRA', lora_scale, t0, unmapped=unmapped, skipped=skipped)
+
+
+def try_load_norm(name, network_on_disk, lora_scale):
+    """Load a Flux2/Klein Norm adapter (LayerNorm/RMSNorm weight + bias deltas) as native modules.
+
+    Norm adapters target the RMSNorm modules inside Flux2 attention
+    (``attn.norm_q``, ``attn.norm_k``, ``attn.norm_added_q``,
+    ``attn.norm_added_k``) — the only norm modules in Flux2 with trainable
+    weights. The block-level ``norm1``/``norm2`` LayerNorms have
+    ``elementwise_affine=False`` and are not adaptable.
+
+    Loader-local stamping: ``modules/lora/lora_convert.py:assign_network_names_to_compvis_modules``
+    deliberately skips setting ``module.network_layer_name`` for transformer
+    norm modules (except SD3) because of legacy CompVis UNet collisions. This
+    loader bypasses the guard locally — for each target it actually binds, it
+    sets ``network_layer_name`` directly on the host module so
+    ``network_activate`` will apply the delta. No edit to the shared
+    ``lora_convert`` carve-out is required, and no norm module is touched
+    unless a Norm adapter explicitly targets it.
+
+    BFL/kohya prefix support is deferred — there is no public Flux2 BFL norm
+    mapping table to verify against. PEFT prefix (the format produced by
+    ``peft`` training) works directly because the base path is already a
+    diffusers path.
+    """
+    t0 = time.time()
+    state_dict = sd_models.read_state_dict(network_on_disk.filename, what='network')
+    if not has_marker(state_dict, NORM_MARKERS):
+        return None
+
+    mapping = resolve_mapping()
+    net = new_network(name, network_on_disk)
+    groups = group_by_suffixes(state_dict, NORM_SUFFIXES)
+
+    unmapped = 0
+    for (prefix, base), w in groups.items():
+        if 'w_norm' not in w:
+            continue
+        targets = resolve_targets(prefix, base)
+        if not targets:
+            unmapped += 1
+            continue
+        for diffusers_path, chunk_idx, _ in targets:
+            if chunk_idx is not None:
+                continue  # norm targets are not fused
+            network_key = "lora_transformer_" + diffusers_path.replace(".", "_")
+            sd_module = mapping.get(network_key)
+            if sd_module is None:
+                unmapped += 1
+                continue
+            # Bypass the lora_convert.py:502 transformer-norm guard locally.
+            # Stamping is idempotent and only touches modules a Norm adapter targets.
+            if not getattr(sd_module, 'network_layer_name', None):
+                sd_module.network_layer_name = network_key
+            nw = network.NetworkWeights(network_key=network_key, sd_key=network_key, w=w, sd_module=sd_module)
+            net.modules[network_key] = network_norm.NetworkModuleNorm(net, nw)
+
+    return finalize_network(net, name, 'Norm', lora_scale, t0, unmapped=unmapped)
 
 
 # === Diffusers-PEFT path helpers (used when lora_force_diffusers is on) ===
