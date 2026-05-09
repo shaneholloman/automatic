@@ -59,8 +59,11 @@ def warn_once(msg, variant=None):
 def get_model(model_cls, variant=None):
     if variant is not None:
         pass
-    if model_cls in {'sd', 'sdxl', 'ldm', 'pixartalpha'}:
+    if model_cls in {'sd'}:
         model_cls = 'sd'
+        variant = shared.opts.taesd_variant
+    elif model_cls in {'sdxl', 'ldm', 'pixartalpha'}:
+        model_cls = 'sdxl'
         variant = shared.opts.taesd_variant
     elif model_cls in {'pixartsigma', 'hunyuandit', 'omnigen', 'auraflow'}:
         model_cls = 'sdxl'

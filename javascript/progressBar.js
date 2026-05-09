@@ -116,7 +116,7 @@ function requestProgress(id_task = 'undefined', progressEl = null, galleryEl = n
     };
   };
 
-  const done = () => {
+  const done = (ok = false) => {
     debug('taskEnd:', id_task);
     localStorage.removeItem('task');
     setProgress();
@@ -126,6 +126,11 @@ function requestProgress(id_task = 'undefined', progressEl = null, galleryEl = n
     for (const gallery of galleries) gallery.style.display = 'flex'; // remove all galleries
     try {
       if (parentGallery && livePreview) {
+        if (ok) {
+          const previewImg = gradioApp().querySelector('#livePreviewImage');
+          const galleryImg = gradioApp().querySelector('#control_gallery img');
+          if (previewImg?.src && galleryImg) galleryImg.src = previewImg.src; // copy preview to gallery if everything is ok
+        }
         parentGallery.removeChild(livePreview);
         parentGallery.style.minHeight = 'unset';
         parentGallery.style.maxHeight = 'unset';
@@ -148,17 +153,17 @@ function requestProgress(id_task = 'undefined', progressEl = null, galleryEl = n
       hasStarted |= res.active;
       if (res.completed || (!res.active && (hasStarted || once))) {
         debug('progress', { end: res, reason: res.completed ? 'completed' : 'inactive' });
-        if (!res.paused) done(); // only abort if not paused
+        if (!res.paused) done(true); // only abort if not paused
         return;
       }
       if (elapsedFromStart > progressTimeout && !res.queued && res.progress === prevProgress) {
         debug('progress', { end: res, reason: 'progressSimeout' });
-        if (!res.paused) done(); // only abort if not paused
+        if (!res.paused) done(false); // only abort if not paused
         return;
       }
       if (elapsedFromStart > startTimeout && !res.queued && !res.active) {
         debug('progress', { end: res, reason: 'startTimeout' });
-        if (!res.paused) done(); // only abort if not paused
+        if (!res.paused) done(false); // only abort if not paused
         return;
       }
       if (res.progress !== prevProgress) {

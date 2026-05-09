@@ -86,6 +86,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - avoid `callback` duplicate registrations
   - pipeline task change causing loss of info on loaded `lora`
   - `detailer` handle `lora` internally
+  - vae preview flashes previous image
 
 ## Update for 2026-04-28
 
