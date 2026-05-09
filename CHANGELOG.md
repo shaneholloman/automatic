@@ -1,8 +1,8 @@
 # Change Log for SD.Next
 
-## Update for 2026-05-08
+## Update for 2026-05-09
 
-### Highlights for 2026-05-08
+### Highlights for 2026-05-09
 
 *What's New?*
 - Image editing models now can work with multiple image inputs!  
@@ -13,7 +13,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
 
 [ReadMe](https://github.com/vladmandic/automatic/blob/master/README.md) | [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md) | [Docs](https://vladmandic.github.io/sdnext-docs/) | [WiKi](https://github.com/vladmandic/automatic/wiki) | [Discord](https://discord.com/invite/sd-next-federal-batch-inspectors-1101998836328697867) | [Sponsor](https://github.com/sponsors/vladmandic)  
 
-### Details for 2026-05-08
+### Details for 2026-05-09
 
 - **Features**
   - **Multi-image** workflows!  
@@ -84,6 +84,8 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - cache network thumbnails
   - `scripts` corrupting control ui state
   - avoid `callback` duplicate registrations
+  - pipeline task change causing loss of info on loaded `lora`
+  - `detailer` handle `lora` internally
 
 ## Update for 2026-04-28
 
