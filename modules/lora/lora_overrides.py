@@ -26,6 +26,7 @@ allow_native = [
     'sdxl',
     'sd3',
     'f1',
+    'f2',
     'chroma',
     'zimage',
     'anima',
