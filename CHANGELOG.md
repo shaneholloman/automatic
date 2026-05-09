@@ -58,6 +58,8 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - **Gallery** add quick info/download/delete buttons on thumbnail hover
   - **Models** sortable columns, ability to remove a model  
     applies to models as well as huggingface cache entries  
+  - **Server Info** add button *copy-to-clipboard*  
+    useful for sharing your system info when asking for help in discord or github  
 - **Control**
   - remove buttons: *input/control/process*
   - move params *control input type* to control menu section
