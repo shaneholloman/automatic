@@ -38,7 +38,7 @@ import time
 import torch
 from modules import shared, sd_models
 from modules.logger import log
-from modules.lora import network, network_lora, network_lokr, network_hada, network_oft, lora_convert
+from modules.lora import network, network_lora, network_lokr, network_hada, network_oft, network_ia3, lora_convert
 from modules.lora import lora_common as l
 
 
@@ -82,11 +82,16 @@ OFT_SUFFIXES = (
     ".oft_blocks", ".oft_diag",
     ".alpha", ".dora_scale", ".bias", ".scale",
 )
+IA3_SUFFIXES = (
+    ".weight", ".on_input",
+    ".alpha", ".scale",
+)
 
 LORA_MARKERS = (".lora_down.weight", ".lora_up.weight", ".lora_A.weight", ".lora_B.weight")
 LOKR_MARKERS = (".lokr_w1", ".lokr_w2")
 LOHA_MARKERS = (".hada_w1_a", ".hada_w1_b", ".hada_w2_a", ".hada_w2_b")
 OFT_MARKERS = (".oft_blocks", ".oft_diag")
+IA3_MARKERS = (".on_input",)  # NOT .weight — too generic, overlaps every other family
 
 
 # === BFL → diffusers mapping ===
@@ -469,6 +474,53 @@ def try_load_oft(name, network_on_disk, lora_scale):
             net.modules[network_key] = network_oft.NetworkModuleOFT(net, nw)
 
     return finalize_network(net, name, 'OFT', lora_scale, t0, unmapped=unmapped, skipped=skipped)
+
+
+def try_load_ia3(name, network_on_disk, lora_scale):
+    """Load a Flux2/Klein IA3 adapter as native modules.
+
+    IA3 stores a per-row or per-column scale vector keyed under ``.weight``
+    plus an ``.on_input`` flag selecting which axis. The ``.on_input`` marker
+    is the format disambiguator — ``.weight`` alone is too generic and
+    overlaps every other family's ``.lora_down.weight`` / ``.hada_w*`` keys,
+    so the SUFFIXES table includes it but the MARKERS gate insists on
+    ``.on_input``.
+
+    Fused QKV in double_blocks is skipped: ``on_input=True`` IA3 vectors
+    would replicate cleanly to Q/K/V (same ``in_features``) but
+    ``on_input=False`` requires slicing the output-axis vector across the
+    three projections, and there is zero real-world IA3-on-DiT prevalence to
+    justify the asymmetry.
+    """
+    t0 = time.time()
+    state_dict = sd_models.read_state_dict(network_on_disk.filename, what='network')
+    if not has_marker(state_dict, IA3_MARKERS):
+        return None
+
+    mapping = resolve_mapping()
+    net = new_network(name, network_on_disk)
+    groups = group_by_suffixes(state_dict, IA3_SUFFIXES)
+
+    unmapped = 0
+    skipped = 0
+    for (prefix, base), w in groups.items():
+        if not ('weight' in w and 'on_input' in w):
+            continue
+        targets = resolve_targets(prefix, base)
+        if any(t[1] is not None for t in targets):
+            log.warning(f'Network load: type=IA3 name="{name}" key={base} fused QKV skipped (unsupported)')
+            skipped += 1
+            continue
+        for diffusers_path, _, _ in targets:
+            network_key = "lora_transformer_" + diffusers_path.replace(".", "_")
+            sd_module = mapping.get(network_key)
+            if sd_module is None:
+                unmapped += 1
+                continue
+            nw = network.NetworkWeights(network_key=network_key, sd_key=network_key, w=w, sd_module=sd_module)
+            net.modules[network_key] = network_ia3.NetworkModuleIa3(net, nw)
+
+    return finalize_network(net, name, 'IA3', lora_scale, t0, unmapped=unmapped, skipped=skipped)
 
 
 # === Diffusers-PEFT path helpers (used when lora_force_diffusers is on) ===
