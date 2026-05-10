@@ -423,6 +423,32 @@ def _bfl_to_diffusers_targets(base):
 # === Native loaders ===
 
 
+def try_load(name, network_on_disk, lora_scale):
+    """Run every Flux2 family loader in dispatch order, merge any that match.
+
+    Per-family ``try_load_*`` entry points stay public; this is the single
+    umbrella the dispatcher in ``modules.lora.lora_load.load_safetensors``
+    calls. Order matters only for marker-cost: LoRA / LoKR are most common
+    so their fast bail-out runs first; the rare families come last.
+
+    Returns a ``Network`` with the union of modules from every matching
+    family loader, or ``None`` if no loader recognized the file.
+    """
+    net = None
+    for try_fn in (
+        try_load_lora, try_load_lokr, try_load_loha, try_load_oft,
+        try_load_ia3, try_load_glora, try_load_norm, try_load_full,
+    ):
+        sub = try_fn(name, network_on_disk, lora_scale)
+        if sub is None:
+            continue
+        if net is None:
+            net = sub
+        else:
+            net.modules.update(sub.modules)
+    return net
+
+
 def try_load_lora(name, network_on_disk, lora_scale):
     """Load a Flux2/Klein LoRA (plus DoRA via the universal ``finalize_updown`` hook) as native modules.
 

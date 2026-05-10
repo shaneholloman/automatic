@@ -103,25 +103,7 @@ def load_safetensors(name, network_on_disk: network.NetworkOnDisk) -> network.Ne
         return chroma_net
     if shared.sd_model_type == 'f2':
         from pipelines.flux import flux2_lora
-        lora_scale = shared.opts.extra_networks_default_multiplier
-        f2_net = None
-        for try_fn in (
-            flux2_lora.try_load_lora,
-            flux2_lora.try_load_lokr,
-            flux2_lora.try_load_loha,
-            flux2_lora.try_load_oft,
-            flux2_lora.try_load_ia3,
-            flux2_lora.try_load_glora,
-            flux2_lora.try_load_norm,
-            flux2_lora.try_load_full,
-        ):
-            sub = try_fn(name, network_on_disk, lora_scale)
-            if sub is None:
-                continue
-            if f2_net is None:
-                f2_net = sub
-            else:
-                f2_net.modules.update(sub.modules)
+        f2_net = flux2_lora.try_load(name, network_on_disk, shared.opts.extra_networks_default_multiplier)
         if f2_net is not None:
             lora_cache[name] = f2_net
         return f2_net
