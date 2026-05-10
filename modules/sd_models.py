@@ -433,6 +433,10 @@ def load_diffuser_force(detected_model_type, checkpoint_info, diffusers_load_con
             from pipelines.model_omnigen import load_omnigen
             sd_model = load_omnigen(checkpoint_info, diffusers_load_config)
             allow_post_quant = False
+        elif model_type in ['HiDreamO1']:
+            from pipelines.model_hidream import load_hidream_o1
+            sd_model = load_hidream_o1(checkpoint_info, diffusers_load_config)
+            allow_post_quant = False
         elif model_type in ['HiDream']:
             from pipelines.model_hidream import load_hidream
             sd_model = load_hidream(checkpoint_info, diffusers_load_config)
@@ -1285,6 +1289,8 @@ def set_diffuser_pipe(pipe, new_pipe_type):
             fn = f'{sys._getframe(2).f_code.co_name}:{sys._getframe(1).f_code.co_name}' # pylint: disable=protected-access
             log.trace(f"Pipeline class change requested: target={new_pipe_type} fn={fn}") # pylint: disable=protected-access
             log.warning(f'Pipeline class change failed: type={new_pipe_type} pipeline={cls} {e}')
+            if debug_load:
+                errors.display(e, 'Pipeline switch')
             has_errors = True
     if not hasattr(pipe, 'config') or has_errors:
         try: # maybe a wrapper pipeline so just change the class
@@ -1302,6 +1308,8 @@ def set_diffuser_pipe(pipe, new_pipe_type):
                 return pipe
         except Exception as e: # pylint: disable=unused-variable
             log.warning(f'Pipeline class set failed: type={new_pipe_type} pipeline={cls} {e}')
+            if debug_load:
+                errors.display(e, 'Pipeline switch')
             has_errors = True
             return pipe
 

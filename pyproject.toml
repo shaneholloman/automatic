@@ -30,6 +30,7 @@ exclude = [
     "pipelines/meissonic",
     "pipelines/omnigen2",
     "pipelines/hdm",
+    "pipelines/hidream",
     "pipelines/segmoe",
     "pipelines/xomni",
     "pipelines/chrono",

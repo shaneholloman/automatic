@@ -11,7 +11,6 @@ from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.schedulers.scheduling_utils import (KarrasDiffusionSchedulers,
                                                    SchedulerMixin,
                                                    SchedulerOutput)
-from diffusers.utils import deprecate
 
 
 class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
@@ -86,7 +85,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             lower_order_final: bool = True,
             disable_corrector: List[int] = [],
             solver_p: SchedulerMixin = None,
-            use_flow_sigmas: bool = True,
             timestep_spacing: str = "linspace",
             steps_offset: int = 0,
             final_sigmas_type: Optional[str] = "zero",  # "zero", "sigma_min"
@@ -303,12 +301,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             else:
                 raise ValueError(
                     "missing `sample` as a required keyward argument")
-        if timestep is not None:
-            deprecate(
-                "timesteps",
-                "1.0.0",
-                "Passing `timesteps` is deprecated and has no effect as model output conversion is now handled via an internal counter `self.step_index`",
-            )
 
         sigma = self.sigmas[self.step_index]
         alpha_t, sigma_t = self._sigma_to_alpha_sigma_t(sigma)
@@ -384,12 +376,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             else:
                 raise ValueError(
                     " missing `order` as a required keyward argument")
-        if prev_timestep is not None:
-            deprecate(
-                "prev_timestep",
-                "1.0.0",
-                "Passing `prev_timestep` is deprecated and has no effect as model output conversion is now handled via an internal counter `self.step_index`",
-            )
         model_output_list = self.model_outputs
 
         s0 = self.timestep_list[-1]
@@ -439,7 +425,7 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         elif self.config.solver_type == "bh2":
             B_h = torch.expm1(hh)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         for i in range(1, order + 1):
             R.append(torch.pow(rks, i - 1))
@@ -529,12 +515,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             else:
                 raise ValueError(
                     " missing`order` as a required keyward argument")
-        if this_timestep is not None:
-            deprecate(
-                "this_timestep",
-                "1.0.0",
-                "Passing `this_timestep` is deprecated and has no effect as model output conversion is now handled via an internal counter `self.step_index`",
-            )
 
         model_output_list = self.model_outputs
 
@@ -582,7 +562,7 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         elif self.config.solver_type == "bh2":
             B_h = torch.expm1(hh)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         for i in range(1, order + 1):
             R.append(torch.pow(rks, i - 1))
@@ -654,14 +634,8 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
              model_output: torch.Tensor,
              timestep: Union[int, torch.Tensor],
              sample: torch.Tensor,
-             s_churn: float = 0.0,
-             s_tmin: float = 0.0,
-             s_tmax: float = float("inf"),
-             s_noise: float = 1.0,
-             noise_clip_std: float = 0.0,
              return_dict: bool = True,
-             generator=None,
-             **kwargs) -> Union[SchedulerOutput, Tuple]:
+             generator=None) -> Union[SchedulerOutput, Tuple]:
         """
         Predict the sample from the previous timestep by reversing the SDE. This function propagates the sample with
         the multistep UniPC.

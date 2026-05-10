@@ -78,6 +78,10 @@ Use these repo-local skills for recurring SD.Next model integration work:
   File: `.github/skills/port-model/SKILL.md`  
   Use when adding a new model family, porting a standalone script into a Diffusers pipeline, or wiring an upstream Diffusers model into SD.Next.
 
+- `port-pipeline`  
+  File: `.github/skills/port-pipeline/SKILL.md`  
+  Use when porting a custom model pipeline implementation to a Diffusers pipeline class with behavior parity and no hard-coded device or attention assumptions.
+
 - `debug-model`  
   File: `.github/skills/debug-model/SKILL.md`  
   Use when a new or existing SD.Next/Diffusers model integration fails during detection, loading, prompt encoding, sampling, or output handling.

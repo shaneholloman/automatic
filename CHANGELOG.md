@@ -32,6 +32,12 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
     still a popular method for upscaling, but has not been updated nor maintained for a while  
     so now its modernized and fully integrated as a built-in script!  
 - **Models**
+HiDream-O1-Image is a natively unified image generative foundation model built on a Pixel-level Unified Transformer (UiT) without external VAEs or disjoint text encoders, which natively encodes raw pixels, text, and task-specific conditions in a single shared token space — supporting text-to-image, image editing, and subject-driven personalization at up to 2,048 × 2,048.
+  - [HiDream-O1-Image](https://huggingface.co/HiDream-ai/HiDream-O1-Image) pixel-level unified transformer model support  
+    HiDream-O1 is based on a single custom *Qwen3-VL* 8.8B 35GB component  
+    includes both **HiDream-O1-Image** *(base)* and **HiDream-O1-Image-Dev** *(distilled*)* variants  
+    includes *T2I* and *I2I edit* capabilities and resolutions up to 2048px   
+    *note*: use steps:50 for base and steps:28 for dev variants  
   - [JoyAI Image Edit](https://huggingface.co/jdopensource/JoyAI-Image-Edit-Diffusers) image-editing model support  
     includes multimodal conditioning using *Qwen3-VL* with a dedicated *JoyImageEdit* diffusion transformer  
     *note* this is a large model at 50GB so use of agressive quantization is recommended  
