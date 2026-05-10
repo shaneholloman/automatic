@@ -684,7 +684,7 @@ def create_settings(cmd_opts):
                 "autocomplete_active": OptionInfo(False, "Enable Autocomplete", gr.Checkbox, {"visible": False}),
                 "autocomplete_enabled": OptionInfo([], "Enabled tag autocomplete files", gr.Dropdown, {"multiselect": True, "choices": [], "visible": False}),
                 "autocomplete_min_chars": OptionInfo(3, "Min autocomplete chars", gr.Slider, {"minimum": 2, "maximum": 6, "step": 1, "visible": False}),
-                "autocomplete_replace_underscores": OptionInfo(True, "Replace underscores in autocomplete", gr.Checkbox, {"visible": False}),
+                "autocomplete_keep_underscores": OptionInfo(False, "Keep underscores in autocomplete", gr.Checkbox, {"visible": False}),
                 "autocomplete_append_comma": OptionInfo(True, "Append comma after autocomplete", gr.Checkbox, {"visible": False}),
 
                 # Caption settings (controlled via Caption Tab UI)
