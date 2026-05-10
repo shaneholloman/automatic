@@ -1,16 +1,14 @@
 # TODO
 
-- Outpaint
-- IPAdapter
-- https://github.com/PrunaAI/pruna
-
 ## Features
 
 ### Assigned
 
+- Check Outpaint, @vladmandic
 - Chat-based interface, @vladmandic
 - Control tab verify overrides handling, @vladmandic
 - Reimplement `llama` remover for Kanvas, @vladmandic
+- Implement [pruna](https://github.com/PrunaAI/pruna), @vladmandic
 
 - Cloud providers, @CalamitousFelicitousness
 - Video processing add full API support, @CalamitousFelicitousness
