@@ -323,7 +323,7 @@ class DownloadManager:
             if version and version.images:
                 for img in version.images:
                     if img.url:
-                        code, _size, _note = download_civit_preview(final_file, img.url)
+                        code, _size, _note = download_civit_preview(final_file, img.url, meta=img.meta)
                         if code == 200:
                             log.info(f'CivitAI preview saved: id={item.id}')
                             break
@@ -338,6 +338,108 @@ class DownloadManager:
 
 
 download_manager = DownloadManager()
+
+
+# ---- Preview metadata helpers ----
+
+def civitai_meta_to_parameters(meta: dict | None) -> str:
+    """Convert Civitai version-image meta dict to sdnext parameters string.
+
+    Output matches sdnext's standard `parameters` channel (`modules/image/save.py:65-72`):
+    positive prompt on line one, optional `Negative prompt:` line two,
+    comma-joined `Key: Value` pairs on line three. Round-trippable through
+    `modules.infotext.parse`.
+    """
+    if not meta or not isinstance(meta, dict):
+        return ''
+    import json
+    from modules.infotext import quote
+    lower = {k.lower(): (k, v) for k, v in meta.items()}
+
+    def lookup(*keys):
+        for k in keys:
+            if k.lower() in lower:
+                return lower[k.lower()][1]
+        return None
+
+    prompt = lookup('prompt') or ''
+    negative = lookup('negativePrompt', 'negative_prompt', 'Negative prompt') or ''
+    pairs = []
+    mapping = [
+        (('steps',), 'Steps'),
+        (('sampler',), 'Sampler'),
+        (('cfgScale', 'cfg_scale', 'CFG scale'), 'CFG scale'),
+        (('seed',), 'Seed'),
+        (('Size',), 'Size'),
+        (('Model',), 'Model'),
+        (('Model hash', 'modelHash'), 'Model hash'),
+        (('clipSkip', 'clip_skip', 'Clip skip'), 'Clip skip'),
+        (('denoisingStrength', 'Denoising strength'), 'Denoising strength'),
+    ]
+    consumed = {'prompt', 'negativeprompt', 'negative_prompt'}
+    for src_keys, out_key in mapping:
+        v = lookup(*src_keys)
+        if v is None or v == '':
+            continue
+        pairs.append(f'{out_key}: {quote(v)}')
+        for k in src_keys:
+            consumed.add(k.lower())
+    for k, v in meta.items():
+        if k.lower() in consumed:
+            continue
+        if k == 'hashes':
+            continue
+        if k in ('resources', 'civitaiResources'):
+            try:
+                pairs.append(f'Civitai resources: {quote(json.dumps(v, separators=(",", ":")))}')
+            except Exception:
+                pass
+            continue
+        if v is None or v == '':
+            continue
+        pairs.append(f'{k}: {quote(v)}')
+    lines = [str(prompt).strip()]
+    if negative:
+        lines.append(f'Negative prompt: {negative}')
+    if pairs:
+        lines.append(', '.join(pairs))
+    return '\n'.join(lines)
+
+
+def embed_preview_parameters(preview_file: str, parameters: str) -> bool:
+    """Embed parameters string into preview image at `preview_file`.
+
+    PNG -> `tEXt` chunk with key `parameters`. JPEG/WEBP -> EXIF
+    `UserComment` via piexif. Other extensions: no-op. Returns success.
+    Embedding failure is swallowed and logged at debug — never raises.
+    """
+    if not preview_file or not parameters:
+        return False
+    ext = os.path.splitext(preview_file)[1].lower()
+    if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
+        return False
+    try:
+        from PIL import Image
+        img = Image.open(preview_file)
+        img.load()
+        try:
+            if ext == '.png':
+                from PIL import PngImagePlugin
+                pnginfo = PngImagePlugin.PngInfo()
+                pnginfo.add_text('parameters', parameters)
+                img.save(preview_file, format='PNG', pnginfo=pnginfo)
+            else:
+                import piexif
+                import piexif.helper
+                exif_bytes = piexif.dump({'Exif': {piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(parameters, encoding='unicode')}})
+                fmt = 'JPEG' if ext in ('.jpg', '.jpeg') else 'WEBP'
+                img.save(preview_file, format=fmt, quality=95, exif=exif_bytes)
+        finally:
+            img.close()
+        return True
+    except Exception as e:
+        log.debug(f'CivitAI preview embed failed: file="{preview_file}" {e}')
+        return False
 
 
 # ---- Legacy compatibility functions ----
@@ -361,7 +463,7 @@ def download_civit_meta(model_path: str, model_id):
     return r.status_code, '', ''
 
 
-def download_civit_preview(model_path: str, preview_url: str):
+def download_civit_preview(model_path: str, preview_url: str, meta: dict | None = None):
     if model_path is None:
         return 500, '', ''
     ext = os.path.splitext(preview_url)[1]
@@ -394,6 +496,13 @@ def download_civit_preview(model_path: str, preview_url: str):
             img = Image.open(preview_file)
             log.info(f'CivitAI download: url={preview_url} file="{preview_file}" size={total_size} image={img.size}')
             img.close()
+            if meta:
+                try:
+                    parameters = civitai_meta_to_parameters(meta)
+                    if parameters and embed_preview_parameters(preview_file, parameters):
+                        log.debug(f'CivitAI preview embed: file="{preview_file}"')
+                except Exception as e:
+                    log.debug(f'CivitAI preview embed skipped: file="{preview_file}" {e}')
     except Exception as e:
         log.error(f'CivitAI download error: url={preview_url} file="{preview_file}" written={written} {e}')
         shared.state.end(jobid)

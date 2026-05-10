@@ -136,7 +136,7 @@ def atomic_civit_search_metadata(item, results):
                 results.append(dict(result))
                 for img in version.images:
                     if img.url:
-                        code, size, note = download_civit_preview(item['filename'], img.url)
+                        code, size, note = download_civit_preview(item['filename'], img.url, meta=img.meta)
                         if code == 200:
                             results.append({**result, 'code': code, 'size': size, 'note': note, 'type': 'preview'})
                             found = True
@@ -157,7 +157,7 @@ def atomic_civit_search_metadata(item, results):
                 results.append(dict(result))
                 for img in version.images:
                     if img.url:
-                        code, size, note = download_civit_preview(item['filename'], img.url)
+                        code, size, note = download_civit_preview(item['filename'], img.url, meta=img.meta)
                         if code == 200:
                             results.append({**result, 'code': code, 'size': size, 'note': note, 'type': 'preview'})
                             found = True
