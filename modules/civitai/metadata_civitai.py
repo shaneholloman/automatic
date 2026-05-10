@@ -104,7 +104,7 @@ def civit_update_metadata(raw: bool = False):
 
 
 def atomic_civit_search_metadata(item, results):
-    from modules.civitai.download_civitai import download_civit_preview, download_civit_meta, backfill_preview_parameters
+    from modules.civitai.download_civitai import download_civit_preview, download_civit_meta, backfill_preview_parameters, preview_has_parameters, resolve_preview_file
     if item is None:
         return
     try:
@@ -112,7 +112,12 @@ def atomic_civit_search_metadata(item, results):
     except Exception:
         return
     has_meta = os.path.isfile(meta) and os.stat(meta).st_size > 0
-    if ('missing.png' in item['preview'] or not has_meta) and os.path.isfile(item['filename']):
+    needs_backfill = False
+    if has_meta and 'missing.png' not in item.get('preview', ''):
+        actual_preview = resolve_preview_file(item)
+        if actual_preview and not preview_has_parameters(actual_preview):
+            needs_backfill = True
+    if ('missing.png' in item['preview'] or not has_meta or needs_backfill) and os.path.isfile(item['filename']):
         sha = item.get('hash', None)
         found = False
         result = {
