@@ -327,6 +327,9 @@ class DownloadManager:
                         if code == 200:
                             log.info(f'CivitAI preview saved: id={item.id}')
                             break
+                        if code == 304 and backfill_preview_parameters(final_file, img.url, img.meta):
+                            log.info(f'CivitAI preview backfilled: id={item.id}')
+                            break
         except Exception as e:
             log.warning(f'CivitAI preview fetch failed: id={item.id} {e}')
 
@@ -440,6 +443,64 @@ def embed_preview_parameters(preview_file: str, parameters: str) -> bool:
     except Exception as e:
         log.debug(f'CivitAI preview embed failed: file="{preview_file}" {e}')
         return False
+
+
+def preview_has_parameters(preview_file: str) -> bool:
+    """Check whether `preview_file` already carries an embedded parameters string.
+
+    Mirrors the lookup `modules/image/metadata.py:read_info_from_image`
+    performs: PNG `image.info["parameters"]` or JPEG/WEBP EXIF `UserComment`.
+    """
+    if not preview_file or not os.path.exists(preview_file):
+        return False
+    try:
+        from PIL import Image
+        img = Image.open(preview_file)
+        try:
+            info = img.info or {}
+            if info.get('parameters'):
+                return True
+            if info.get('UserComment'):
+                return True
+            exif = info.get('exif')
+            if exif:
+                import piexif
+                try:
+                    parsed = piexif.load(exif)
+                    if parsed.get('Exif', {}).get(piexif.ExifIFD.UserComment):
+                        return True
+                except Exception:
+                    pass
+        finally:
+            img.close()
+    except Exception:
+        pass
+    return False
+
+
+def backfill_preview_parameters(model_path: str, preview_url: str, meta: dict | None) -> bool:
+    """Embed Civitai meta into an existing preview file when it lacks parameters.
+
+    Used by the rescan path to retroactively populate preview metadata
+    without re-downloading bytes. Returns True only if a new chunk was
+    written; False for no-op (file missing, no meta, already populated,
+    embed failed).
+    """
+    if not meta or not model_path or not preview_url:
+        return False
+    ext = os.path.splitext(preview_url)[1]
+    preview_file = os.path.splitext(model_path)[0] + ext
+    if not os.path.exists(preview_file):
+        return False
+    if preview_has_parameters(preview_file):
+        return False
+    parameters = civitai_meta_to_parameters(meta)
+    if not parameters:
+        return False
+    if embed_preview_parameters(preview_file, parameters):
+        log.info(f'CivitAI preview backfill: file="{preview_file}"')
+        return True
+    return False
 
 
 # ---- Legacy compatibility functions ----

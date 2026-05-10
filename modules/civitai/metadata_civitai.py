@@ -104,7 +104,7 @@ def civit_update_metadata(raw: bool = False):
 
 
 def atomic_civit_search_metadata(item, results):
-    from modules.civitai.download_civitai import download_civit_preview, download_civit_meta
+    from modules.civitai.download_civitai import download_civit_preview, download_civit_meta, backfill_preview_parameters
     if item is None:
         return
     try:
@@ -141,6 +141,10 @@ def atomic_civit_search_metadata(item, results):
                             results.append({**result, 'code': code, 'size': size, 'note': note, 'type': 'preview'})
                             found = True
                             break
+                        if code == 304 and backfill_preview_parameters(item['filename'], img.url, img.meta):
+                            results.append({**result, 'code': 200, 'size': '', 'note': 'metadata embedded', 'type': 'preview'})
+                            found = True
+                            break
             else:
                 result['code'] = 404
             time.sleep(0.25)  # rate limiting
@@ -160,6 +164,10 @@ def atomic_civit_search_metadata(item, results):
                         code, size, note = download_civit_preview(item['filename'], img.url, meta=img.meta)
                         if code == 200:
                             results.append({**result, 'code': code, 'size': size, 'note': note, 'type': 'preview'})
+                            found = True
+                            break
+                        if code == 304 and backfill_preview_parameters(item['filename'], img.url, img.meta):
+                            results.append({**result, 'code': 200, 'size': '', 'note': 'metadata embedded', 'type': 'preview'})
                             found = True
                             break
             else:
