@@ -5,9 +5,10 @@
 ### Highlights for 2026-05-10
 
 *What's New?*
-- Image editing models now can work with multiple image inputs!  
-- New models: *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux* plus enhanced capabilities for *Anima*, *Ernie-Image*, *LTX* and *Chroma* models  
-- UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, and more
+- Image editing models now can work with multiple image inputs!
+- New models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
+- Enhanced capabilities for *Anima*, *Ernie-Image*, *LTX*, *Flux.2* and *Chroma* models
+- UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, and more...
 
 For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md)  
 
@@ -15,24 +16,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
 
 ### Details for 2026-05-10
 
-- **Features**
-  - **Multi-image** workflows!  
-    for models that support multiple images as inputs, you can now add multiple stages in Kanvas  
-    prompts like "*place character from first image, add background from second image, render in style from third image*" are now possible  
-  - option *inputs -> skip processing* to force images to passed to model as-is without any pre-processing  
-    examples of models that support multi-inputs: *qwen-image-edit, flux.2, google-gemini*  
-  - **Anima** support for *img2img* and *inpaint* workflows
-  - **Ernie-Image** add *LoRA* support, *img2img* and *inpaint* workflows
-  - **LTX** support for *audio* generation
-  - **Chroma** add *LoRA* support
-  - **Prompt enhance** add info to image metadata  
-  - custom **VAE** loader for all pipelines  
-    *note*: vae still needs to be compatible with the model  
-  - [SD Ultimate Upscale](https://github.com/Coyote-A/ultimate-upscale-for-automatic1111)  
-    still a popular method for upscaling, but has not been updated nor maintained for a while  
-    so now its modernized and fully integrated as a built-in script!  
 - **Models**
-HiDream-O1-Image is a natively unified image generative foundation model built on a Pixel-level Unified Transformer (UiT) without external VAEs or disjoint text encoders, which natively encodes raw pixels, text, and task-specific conditions in a single shared token space — supporting text-to-image, image editing, and subject-driven personalization at up to 2,048 × 2,048.
   - [HiDream-O1-Image](https://huggingface.co/HiDream-ai/HiDream-O1-Image) pixel-level unified transformer model support  
     HiDream-O1 is based on a single custom *Qwen3-VL* 8.8B 35GB component  
     includes both **HiDream-O1-Image** *(base)* and **HiDream-O1-Image-Dev** *(distilled*)* variants  
@@ -52,6 +36,24 @@ HiDream-O1-Image is a natively unified image generative foundation model built o
     *note* as with most multi-modal/unified models, it needs higher step count (recommended is 64 steps) and uses quite a lot of VRAM, so use with caution!  
   - [Owen777 UltraFlux-v1](https://huggingface.co/Owen777/UltraFlux-v1) native 4K text-to-image model based on *FLUX.1-dev*  
     *note*: UltraFlux is capable of rendering images up to 4K resolution, but it doesnt mean it will do that on any hardware - it will depend on your VRAM!  
+- **Features**
+  - **Multi-image** workflows!  
+    for models that support multiple images as inputs, you can now add multiple stages in Kanvas  
+    prompts like "*place character from first image, add background from second image, render in style from third image*" are now possible  
+  - option *inputs -> skip processing* to force images to passed to model as-is without any pre-processing  
+    examples of models that support multi-inputs: *qwen-image-edit, flux.2, google-gemini*  
+  - [SD Ultimate Upscale](https://github.com/Coyote-A/ultimate-upscale-for-automatic1111)  
+    still a popular method for upscaling, but has not been updated nor maintained for a while  
+    so now its modernized and fully integrated as a built-in script!  
+  - **LTX** support for *audio* generation
+  - **Anima** support for *img2img* and *inpaint* workflows
+  - **Ernie-Image** add native *LoRA* support, *img2img* and *inpaint* workflows
+  - **Chroma** add native *LoRA* support
+  - **Flux.2** add native *LoRA* support
+  - **Prompt enhance** add info to image metadata  
+  - custom **VAE** loader for all pipelines  
+    *note*: vae still needs to be compatible with the model  
+  - **CivitAI** downloaded thumbnails now include metadata  
 - **UI**
   - **Networks** using networks to load model or auto-download a reference model will now be reflected in the UI  
   - ability to manually reorient *input/output* panels
