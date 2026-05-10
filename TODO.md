@@ -1,5 +1,9 @@
 # TODO
 
+- Outpaint
+- IPAdapter
+- https://github.com/PrunaAI/pruna
+
 ## Features
 
 ### Assigned
