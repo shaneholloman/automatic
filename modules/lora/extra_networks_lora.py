@@ -218,11 +218,11 @@ class ExtraNetworkLora(extra_networks.ExtraNetwork):
         requested = self.signature(names, te_multipliers, unet_multipliers)
         reason = ''
 
-        load_method = lora_overrides.get_method()
+        load_method, load_reason = lora_overrides.get_method()
         if debug:
             import sys
             fn = f'{sys._getframe(2).f_code.co_name}:{sys._getframe(1).f_code.co_name}' # pylint: disable=protected-access
-            debug_log(f'Network load: type=LoRA include={include} exclude={exclude} method={load_method} requested={requested} fn={fn}')
+            debug_log(f'Network load: type=LoRA include={include} exclude={exclude} method={load_method} reason={load_reason} requested={requested} fn={fn}')
 
         if load_method == 'diffusers':
             has_changed, reason = self.changed(requested)
@@ -255,7 +255,7 @@ class ExtraNetworkLora(extra_networks.ExtraNetwork):
             prompt(p)
             if has_changed and len(include) == 0: # print only once
                 actual_method = 'native' if any(len(n.modules) > 0 for n in l.loaded_networks) else load_method
-                log.info(f'Network load: type=LoRA networks={[n.name for n in l.loaded_networks]} load={load_method} method={actual_method} mode={"fuse" if shared.opts.lora_fuse_native else "backup"} te={te_multipliers} unet={unet_multipliers} time={l.timer.summary} reason={reason}')
+                log.info(f'Network load: type=LoRA networks={[n.name for n in l.loaded_networks]} load={load_method}({load_reason}) method={actual_method} mode={"fuse" if shared.opts.lora_fuse_native else "backup"} te={te_multipliers} unet={unet_multipliers} time={l.timer.summary} reason={reason}')
 
     def deactivate(self, p, force=False):
         if len(lora_diffusers.diffuser_loaded) > 0 and (shared.opts.lora_force_reload or force):
