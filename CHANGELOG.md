@@ -93,6 +93,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - `torch.compile` improvements
   - `gradio` preprocess exception handling
   - `ipadapters` with offloading
+  - `kanvas` outpaint
 
 ## Update for 2026-04-28
 
