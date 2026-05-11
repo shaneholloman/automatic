@@ -881,7 +881,7 @@ def check_torch():
     try:
         import torch
         try:
-            import intel_extension_for_pytorch as ipex # pylint: disable=import-error, unused-import # ty: ignore[unresolved-import]
+            import intel_extension_for_pytorch as ipex # pylint: disable=import-error, unused-import
             log.info(f'Torch backend: type=IPEX version={ipex.__version__}')
         except Exception:
             pass
@@ -952,7 +952,7 @@ def check_torch():
 
         if args.use_directml and allow_directml:
             try:
-                import torch_directml # pylint: disable=import-error # ty: ignore[unresolved-import]
+                import torch_directml # pylint: disable=import-error
                 dml_ver = package_version("torch-directml")
                 log.warning(f'Torch backend: DirectML ({dml_ver})')
                 log.warning('DirectML: end-of-life')
@@ -1020,7 +1020,7 @@ def run_extension_installer(folder):
             env['PYTHONPATH'] = os.path.abspath(".")
             if os.environ.get('PYTHONPATH', None) is not None:
                 seperator = ';' if sys.platform == 'win32' else ':'
-                env['PYTHONPATH'] += seperator + os.environ.get('PYTHONPATH', '')
+                env['PYTHONPATH'] += seperator + os.environ.get('PYTHONPATH', None)
             result, txt = run(sys.executable, path_installer, env=env, cwd=folder)
             debug(f'Extension installer: file="{path_installer}" {result.stdout}')
             if result.returncode != 0:

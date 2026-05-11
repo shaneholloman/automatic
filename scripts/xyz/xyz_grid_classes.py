@@ -39,7 +39,7 @@ from scripts.xyz.xyz_grid_shared import ( # pylint: disable=no-name-in-module, u
     format_nothing,
     str_permutations,
  )
-from modules import shared, shared_items, sd_samplers, ipadapter, sd_models, sd_vae, sd_unet, sd_checkpoint
+from modules import shared, shared_items, sd_samplers, ipadapter, sd_models, sd_vae, sd_unet
 from modules.control.units import controlnet, t2iadapter
 from modules.control import processor
 
@@ -191,10 +191,10 @@ class SharedSettingsStackHelper():
 
 axis_options = [
     AxisOption("Nothing", str, do_nothing, fmt=format_nothing),
-    AxisOption("[Model] Model", str, apply_checkpoint, cost=1.0, fmt=format_value_add_label, choices=lambda: sorted(sd_checkpoint.checkpoints_list)),
+    AxisOption("[Model] Model", str, apply_checkpoint, cost=1.0, fmt=format_value_add_label, choices=lambda: sorted(sd_models.checkpoints_list)),
     AxisOption("[Model] UNET", str, apply_unet, cost=0.8, choices=lambda: ['None'] + list(sd_unet.unet_dict)),
     AxisOption("[Model] VAE", str, apply_vae, cost=0.6, choices=lambda: ['None'] + list(sd_vae.vae_dict)),
-    AxisOption("[Model] Refiner", str, apply_refiner, cost=0.8, fmt=format_value_add_label, choices=lambda: ['None'] + sorted(sd_checkpoint.checkpoints_list)),
+    AxisOption("[Model] Refiner", str, apply_refiner, cost=0.8, fmt=format_value_add_label, choices=lambda: ['None'] + sorted(sd_models.checkpoints_list)),
     AxisOption("[Model] Text encoder", str, apply_te, cost=0.7, choices=shared_items.sd_te_items),
     AxisOption("[Prompt] Search & replace", str, apply_prompt_primary, fmt=format_value_add_label),
     AxisOption("[Prompt] Search & replace refine", str, apply_prompt_refine, fmt=format_value_add_label),
