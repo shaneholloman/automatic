@@ -71,7 +71,6 @@ class MoDScript(scripts_manager.Script):
         from installer import install
         install('ligo-segments')
         try:
-            from ligo.segments import segment # pylint: disable=unused-import
             return True
         except Exception as e:
             log.error(f'MoD: {e}')

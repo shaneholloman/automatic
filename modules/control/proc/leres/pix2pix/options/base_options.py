@@ -1,8 +1,8 @@
 import argparse
 import os
-from ...pix2pix.util import util
+from ...pix2pix.util import util  # noqa: TID252
 # import torch
-from ...pix2pix import models
+from ...pix2pix import models  # noqa: TID252
 # import pix2pix.data
 import numpy as np
 

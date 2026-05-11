@@ -8,10 +8,6 @@ from modules.logger import log
 from modules.sd_hijack_hypertile import context_hypertile_vae, context_hypertile_unet
 from modules.processing_class import ( # pylint: disable=unused-import
     StableDiffusionProcessing,
-    StableDiffusionProcessingTxt2Img,
-    StableDiffusionProcessingImg2Img,
-    StableDiffusionProcessingVideo,
-    StableDiffusionProcessingControl,
 )
 from modules.processing_info import create_infotext
 

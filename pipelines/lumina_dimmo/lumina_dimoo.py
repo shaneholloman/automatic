@@ -17,8 +17,7 @@ import sys
 from abc import abstractmethod
 from dataclasses import dataclass, fields
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union, cast
-from accelerate import init_empty_weights
+from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union, cast
 
 from tqdm.rich import tqdm
 import numpy as np
@@ -35,7 +34,6 @@ from diffusers import DiffusionPipeline, VQModel
 from diffusers.utils import BaseOutput, logging, replace_example_docstring
 from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 
-from diffusers.pipelines.pipeline_utils import ImagePipelineOutput
 
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
@@ -53,7 +51,7 @@ class StrEnum(str, Enum):
         return self.value
 
     def __repr__(self) -> str:
-        return f"'{str(self)}'"
+        return f"'{self!s}'"
 
 
 class LayerNormType(StrEnum):
@@ -945,7 +943,7 @@ class LLaDALlamaBlock(LLaDABlock):
         cat="cond",
         to_compute_mask=None,
     ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
-        B, T, D = x.shape
+        _B, _T, D = x.shape
 
         x_normed = self.attn_norm(x)
         q = self.q_proj(x_normed)
@@ -1612,7 +1610,7 @@ def get_num_transfer_tokens(mask_index, steps):
 
 
 def mask_by_random_topk(keep_n, probs, temperature=1.0, generator=None):
-    B, S = probs.shape
+    B, _S = probs.shape
     noise = gumbel_noise(probs, generator=generator)
 
     conf = probs / temperature + noise
@@ -2049,7 +2047,7 @@ class LuminaDiMOOPipeline(DiffusionPipeline):
         """
         device = next(model.parameters()).device
         prompt = prompt.to(device)
-        B, P = prompt.shape
+        B, _P = prompt.shape
         assert B == 1, "batch>1 not supported - wrap in loop if needed"
 
         x = prompt
@@ -2165,7 +2163,7 @@ class LuminaDiMOOPipeline(DiffusionPipeline):
 
         device = next(model.parameters()).device
         prompt = prompt.to(device)
-        B, P = prompt.shape
+        B, _P = prompt.shape
         assert B == 1, "batch>1 not supported - wrap in loop if needed"
 
         x = prompt
@@ -2494,7 +2492,7 @@ class LuminaDiMOOPipeline(DiffusionPipeline):
         uncon_prompt_token = self.tokenizer(uncon_prompt)["input_ids"]
 
         if painting_mode:
-            img_mask_token, img_vis = encode_img_with_paint(
+            img_mask_token, _img_vis = encode_img_with_paint(
                 painting_image,
                 vqvae=self.vqvae,
                 mask_h_ratio=mask_h_ratio,
@@ -2574,7 +2572,7 @@ class LuminaDiMOOPipeline(DiffusionPipeline):
         processed_image = var_center_crop(image, crop_size_list=crop_size_list)
 
         image_width, image_height = processed_image.size
-        seq_len, newline_every, _token_grid_height, _token_grid_width = calculate_vq_params(
+        _seq_len, _newline_every, _token_grid_height, _token_grid_width = calculate_vq_params(
             image_height, image_width, self.vae_scale_factor
         )
 

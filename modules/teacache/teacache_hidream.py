@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple
 from diffusers.models.modeling_outputs import Transformer2DModelOutput
-from diffusers.utils import logging, deprecate, USE_PEFT_BACKEND, logging, scale_lora_layers, unscale_lora_layers
+from diffusers.utils import deprecate, USE_PEFT_BACKEND, logging, scale_lora_layers, unscale_lora_layers
 
 import torch
 import numpy as np

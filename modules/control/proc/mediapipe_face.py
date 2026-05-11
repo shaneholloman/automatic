@@ -16,7 +16,6 @@ def check_dependencies():
         if not installed(pkg[1], quiet=True):
             install(pkg[0], pkg[1], ignore=False)
     try:
-        import mediapipe as mp # pylint: disable=unused-import
         checked_ok = True
         return True
     except Exception as e:

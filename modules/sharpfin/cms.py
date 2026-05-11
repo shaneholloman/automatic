@@ -131,7 +131,7 @@ def apply_srgb(
                             flags=flags
                         )
                     else:
-                        img = cast(Image, profileToProfile(
+                        img = cast('Image', profileToProfile(
                             img,
                             profile,
                             _SRGB,

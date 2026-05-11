@@ -3,7 +3,7 @@ import ast
 import gradio as gr
 from modules import scripts_manager
 from modules.processing import Processed, get_processed
-from modules.shared import opts, cmd_opts, state # pylint: disable=unused-import
+from modules.shared import cmd_opts # pylint: disable=unused-import
 
 
 def convertExpr2Expression(expr):

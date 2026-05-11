@@ -13,7 +13,7 @@ from modules import shared, devices, errors, model_quant, sd_models, sd_models_c
 from modules.sd_offload_aux import register_aux, deregister_aux, move_aux_to_gpu, offload_aux
 from modules.logger import log, console
 from modules.caption import vqa_detection
-from modules.caption.models_def import vlm_models, vlm_system, vlm_default, vlm_prefill, vlm_prompts, vlm_prompt_mapping, vlm_prompt_placeholders, vlm_prompts_common, vlm_prompts_florence, vlm_prompts_moondream, vlm_prompts_moondream2, vlm_prompts_promptgen, get_vlm_repo
+from modules.caption.models_def import vlm_models, vlm_prefill, vlm_prompt_mapping, vlm_prompt_placeholders, vlm_prompts_common, vlm_prompts_florence, vlm_prompts_moondream, vlm_prompts_moondream2, vlm_prompts_promptgen, get_vlm_repo
 
 # Debug logging - function-based to avoid circular import
 debug_enabled = os.environ.get('SD_CAPTION_DEBUG', None) is not None

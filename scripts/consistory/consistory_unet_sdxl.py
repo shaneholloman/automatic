@@ -789,10 +789,10 @@ class ConsistorySDXLUNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditio
             b2 (`float`): Scaling factor for stage 2 to amplify the contributions of backbone features.
         """
         for i, upsample_block in enumerate(self.up_blocks):
-            setattr(upsample_block, "s1", s1)
-            setattr(upsample_block, "s2", s2)
-            setattr(upsample_block, "b1", b1)
-            setattr(upsample_block, "b2", b2)
+            upsample_block.s1 = s1
+            upsample_block.s2 = s2
+            upsample_block.b1 = b1
+            upsample_block.b2 = b2
 
     def disable_freeu(self):
         """Disables the FreeU mechanism."""

@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from threading import Lock
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 _instance_id = 0
 _lock = Lock()

@@ -194,7 +194,7 @@ class FlashFlowMatchEulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
 
     def set_timesteps(
             self,
-            num_inference_steps: int = None,
+            num_inference_steps: int | None = None,
             device: Union[str, torch.device] = None,
             sigmas: Optional[List[float]] = None,
             mu: Optional[float] = None,

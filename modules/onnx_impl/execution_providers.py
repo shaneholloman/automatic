@@ -96,7 +96,7 @@ def get_provider() -> tuple:
 
 def install_execution_provider(ep: ExecutionProvider):
     import importlib  # pylint: disable=deprecated-module
-    from installer import installed, install, uninstall
+    from installer import install, uninstall
     res = "<br><pre>"
     res += uninstall(["onnxruntime", "onnxruntime-directml", "onnxruntime-gpu", "onnxruntime-training", "onnxruntime-openvino"], quiet=True)
     packages = ["onnxruntime"] # Failed to load olive: cannot import name '__version__' from 'onnxruntime'

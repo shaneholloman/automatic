@@ -1,7 +1,6 @@
 # import transformers
-from modules import shared, devices, sd_models, model_quant # pylint: disable=unused-import
+from modules import sd_models # pylint: disable=unused-import
 from modules.logger import log
-from pipelines import generic # pylint: disable=unused-import
 
 
 def load_nextstep(checkpoint_info, diffusers_load_config=None): # pylint: disable=unused-argument

@@ -402,7 +402,7 @@ def predict(question: str, image: Image.Image, repo: str, model_name: str | None
     except Exception as e:
         from modules import errors
         errors.display(e, 'Moondream3')
-        return f"Error: {str(e)}"
+        return f"Error: {e!s}"
     finally:
         offload_aux('moondream3')
 

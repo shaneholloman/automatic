@@ -361,7 +361,7 @@ def get_deletefile(file: str):
         return {"deleted": f"{file}"}
     except Exception as e:
         log.error(f'Delete: file="{file}" error: {e}')
-        raise HTTPException(status_code=500, detail=f"error deleting file {file}: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"error deleting file {file}: {e!s}") from e
 
 def get_deleteimage(file: str):
     import os
@@ -383,7 +383,7 @@ def get_deleteimage(file: str):
         return {"deleted": f"{file}"}
     except Exception as e:
         log.error(f'Delete: file="{file}" error: {e}')
-        raise HTTPException(status_code=500, detail=f"error deleting file {file}: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"error deleting file {file}: {e!s}") from e
 
 def get_pnginfo(file: str):
     """Extract generation parameters from a image file path. Returns raw info string and parsed parameters dict."""

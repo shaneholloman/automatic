@@ -71,7 +71,7 @@ class AdapterModel(T2IAdapter):
 
 
 class Adapter():
-    def __init__(self, model_id: str = None, device = None, dtype = None, load_config = None):
+    def __init__(self, model_id: str | None = None, device = None, dtype = None, load_config = None):
         self.model: AdapterModel = None
         self.model_id: str = model_id
         self.device = device
@@ -91,7 +91,7 @@ class Adapter():
         self.model = None
         self.model_id = None
 
-    def load(self, model_id: str = None, force: bool = True) -> str:
+    def load(self, model_id: str | None = None, force: bool = True) -> str:
         with load_lock:
             try:
                 t0 = time.time()

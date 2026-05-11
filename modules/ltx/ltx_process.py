@@ -149,7 +149,7 @@ def run_ltx(task_id,
             extra_networks.deactivate(p)
         shared.state.end()
         progress.finish_task(task_id)
-        yield None, f'LTX Error: {str(e)}'
+        yield None, f'LTX Error: {e!s}'
 
     if model is None or len(model) == 0 or model == 'None':
         yield from abort('Video: no model selected', ok=True)

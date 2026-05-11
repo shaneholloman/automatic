@@ -149,7 +149,7 @@ def resize_rel_pos_embed(state_dict, model, interpolation: str = 'bicubic', seq_
             dst_num_pos, _ = model.visual.state_dict()[key].size()
             dst_patch_shape = model.visual.patch_embed.patch_shape
             if dst_patch_shape[0] != dst_patch_shape[1]:
-                raise NotImplementedError()
+                raise NotImplementedError
             num_extra_tokens = dst_num_pos - (dst_patch_shape[0] * 2 - 1) * (dst_patch_shape[1] * 2 - 1)
             src_size = int((src_num_pos - num_extra_tokens) ** 0.5)
             dst_size = int((dst_num_pos - num_extra_tokens) ** 0.5)

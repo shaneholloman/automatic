@@ -4,18 +4,18 @@ import torch
 from torch import Tensor
 
 __all__ = [
-    "weighted_sum",
-    "weighted_subtraction",
-    "tensor_sum",
     "add_difference",
-    "sum_twice",
-    "triple_sum",
+    "distribution_crossover",
     "euclidean_add_difference",
     "multiply_difference",
-    "top_k_tensor_sum",
     "similarity_add_difference",
-    "distribution_crossover",
+    "sum_twice",
+    "tensor_sum",
     "ties_add_difference",
+    "top_k_tensor_sum",
+    "triple_sum",
+    "weighted_subtraction",
+    "weighted_sum",
 ]
 
 

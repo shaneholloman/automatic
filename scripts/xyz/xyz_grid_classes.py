@@ -34,7 +34,6 @@ from scripts.xyz.xyz_grid_shared import ( # pylint: disable=no-name-in-module, u
     apply_control,
     format_value_add_label,
     format_bool,
-    format_value,
     format_value_join_list,
     do_nothing,
     format_nothing,
