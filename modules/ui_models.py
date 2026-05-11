@@ -3,7 +3,7 @@ import inspect
 from html import escape
 from typing import cast
 import gradio as gr
-from modules import errors, sd_models, sd_vae, extras, sd_samplers, ui_symbols, modelstats
+from modules import errors, sd_models, sd_checkpoint, sd_vae, extras, sd_samplers, ui_symbols, modelstats
 from modules.ui_components import ToolButton
 from modules.ui_common import create_refresh_button
 from modules.call_queue import wrap_gradio_gpu_call
@@ -24,12 +24,12 @@ def get_folder_size(folder):
 
 
 def update_model_hashes():
-    from modules import sd_unet, sd_checkpoint
+    from modules import sd_unet
     unets = {}
     for k, v in sd_unet.unet_dict.items():
         unets[k] = sd_checkpoint.CheckpointInfo(name=k, filename=v, model_type='unet')
-    yield from sd_models.update_model_hashes(unets, model_type='unet')
-    yield from sd_models.update_model_hashes(model_type='checkpoint')
+    yield from sd_checkpoint.update_model_hashes(unets, model_type='unet')
+    yield from sd_checkpoint.update_model_hashes(model_type='checkpoint')
 
 
 def create_models_table(rows: list = []):
@@ -181,7 +181,7 @@ def create_ui():
                     model_table = gr.HTML(value=create_models_table(), elem_id="model_list_table", elem_classes="scroll-auto")
 
                 model_checkhash_btn.click(fn=update_model_hashes, inputs=[], outputs=[model_table])
-                model_list_btn.click(fn=lambda: create_models_table(list(sd_models.checkpoints_list.values())), inputs=[], outputs=[model_table])
+                model_list_btn.click(fn=lambda: create_models_table(list(sd_checkpoint.checkpoints_list.values())), inputs=[], outputs=[model_table])
 
             with gr.Tab(label="Cache List", elem_id="models_cache_tab"):
                 with gr.Row():

@@ -15,7 +15,7 @@ exclude = [
     ".vscode",
     ".ruff_cache",
     "__pycache__",
-    "node_modules",
+    "**/node_modules",
     "modules/teacache",
     "modules/sharpfin",
     "modules/seedvr/src",
@@ -115,6 +115,7 @@ main.ignore-paths=[
     ".ruff_cache",
     ".vscode",
     "venv",
+    ".*/node_modules/.*",
     "modules/apg",
     "modules/cfgzero",
     "modules/control/proc",
@@ -141,7 +142,6 @@ main.ignore-paths=[
     "modules/taesd",
     "modules/teacache",
     "modules/todo",
-    "node_modules",
     "pipelines/bria",
     "pipelines/chrono",
     "pipelines/f_lite",
@@ -373,8 +373,8 @@ include = [
 exclude = [
     "**/.*",
     ".git/",
-    "**/node_modules",
     "**/__pycache__",
+    "**/node_modules",
     "venv",
 ]
 extraPaths = [
@@ -398,19 +398,17 @@ include = [
     "extensions-builtin/**/*.py"
 ]
 exclude = [
-    "venv/",
+    "**/.*",
     "*.git/",
+    "**/__pycache__",
+    "**/node_modules",
+    "venv/",
 ]
 
 [tool.ty.rules]
 invalid-method-override = "ignore"
 invalid-argument-type = "ignore"
-unresolved-import = "ignore"
 unresolved-attribute = "ignore"
 invalid-assignment = "ignore"
-unsupported-operator = "ignore"
 no-matching-overload = "ignore"
 unsupported-base = "ignore"
-possibly-missing-attribute = "ignore"
-invalid-parameter-default = "ignore"
-call-non-callable = "ignore"

@@ -14,8 +14,8 @@ log.debug('Initializing: shared module')
 
 import modules.memmon
 import modules.paths as paths
-from modules.json_helpers import readfile # pylint: disable=W0611
-from modules.shared_helpers import listdir # pylint: disable=W0611
+from modules.json_helpers import readfile # pylint: disable=unused-import
+from modules.shared_helpers import listdir, req # pylint: disable=unused-import
 from modules import errors, devices, shared_state, cmd_args, history, files_cache # pylint: disable=unused-import
 from modules.shared_defaults import get_default_modes
 from modules.memstats import memory_stats # pylint: disable=unused-import

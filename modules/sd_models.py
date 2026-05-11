@@ -17,7 +17,7 @@ from modules.shared_helpers import walk_files
 from modules.modeldata import model_data
 from modules.sd_checkpoint import CheckpointInfo, select_checkpoint, list_models, checkpoint_titles, get_closest_checkpoint_match # pylint: disable=unused-import
 from modules.sd_offload import get_module_names, disable_offload, set_diffuser_offload, apply_balanced_offload, set_accelerate # pylint: disable=unused-import
-from modules.sd_models_utils import NoWatermark, get_signature, path_to_repo, apply_function_to_model # pylint: disable=unused-import
+from modules.sd_models_utils import NoWatermark, get_signature, path_to_repo, apply_function_to_model, read_state_dict # pylint: disable=unused-import
 
 
 model_dir = "Stable-diffusion"

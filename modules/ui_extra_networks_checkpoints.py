@@ -3,7 +3,7 @@ import html
 import json
 import concurrent.futures
 from datetime import datetime
-from modules import shared, ui_extra_networks, sd_models, modelstats, paths, devices
+from modules import shared, ui_extra_networks, sd_models, sd_checkpoint, modelstats, paths, devices
 from modules.logger import log
 from modules.json_helpers import readfile
 
@@ -32,7 +32,7 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
         shared.refresh_checkpoints()
 
     def list_reference(self): # pylint: disable=inconsistent-return-statements
-        existing = [model.filename if model.type == 'safetensors' else model.name for model in sd_models.checkpoints_list.values()]
+        existing = [model.filename if model.type == 'safetensors' else model.name for model in sd_checkpoint.checkpoints_list.values()]
 
         def reference_downloaded(url):
             url = url.split('@')[0] if '@' in url else 'Diffusers/' + url
@@ -131,7 +131,7 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
     def create_item(self, name):
         record = None
         try:
-            checkpoint: sd_models.CheckpointInfo = sd_models.checkpoints_list.get(name)
+            checkpoint: sd_checkpoint.CheckpointInfo = sd_checkpoint.checkpoints_list.get(name)
             size, mtime = modelstats.stat(checkpoint.filename)
             record = {
                 "type": 'Model',
@@ -168,7 +168,7 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
     def list_items(self):
         items = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=shared.max_workers) as executor:
-            future_items = {executor.submit(self.create_item, cp): cp for cp in list(sd_models.checkpoints_list.copy())}
+            future_items = {executor.submit(self.create_item, cp): cp for cp in list(sd_checkpoint.checkpoints_list.copy())}
             for future in concurrent.futures.as_completed(future_items):
                 item = future.result()
                 if item is not None:
