@@ -98,10 +98,10 @@ class Adapter():
                 model_id = model_id or self.model_id
                 if model_id is None or model_id == 'None':
                     self.reset()
-                    return
+                    return ''
                 if model_id not in all_models:
                     log.error(f'Control {what} unknown model: id="{model_id}" available={list(all_models)}')
-                    return
+                    return ''
                 model_path, model_args = all_models[model_id]
                 self.load_config.update(model_args)
                 from modules.shared import opts
@@ -113,10 +113,9 @@ class Adapter():
                     os.unsetenv('HF_HUB_OFFLINE')
                 if model_path is None:
                     log.error(f'Control {what} model load failed: id="{model_id}" error=unknown model id')
-                    return
+                    return ''
                 if model_id == self.model_id and not force:
-                    # log.debug(f'Control {what} model: id="{model_id}" path="{model_path}" already loaded')
-                    return
+                    return ''
                 log.debug(f'Control {what} model loading: id="{model_id}" path="{model_path}"')
                 if model_path.endswith('.pth') or model_path.endswith('.pt') or model_path.endswith('.safetensors') or model_path.endswith('.bin'):
                     from huggingface_hub import hf_hub_download

@@ -852,7 +852,7 @@ def control_run(state: str = '', # pylint: disable=keyword-arg-before-vararg
     html_txt = f'<p>Ready {image_txt}</p>' if image_txt != '' else ''
     if len(info_txt) > 0:
         html_txt = html_txt + infotext_to_html(info_txt[0])
+    result = (output_images, blended_image, html_txt, output_filename)
     if is_generator:
-        yield (output_images, blended_image, html_txt, output_filename)
-    else:
-        return (output_images, blended_image, html_txt, output_filename)
+        yield result
+    return result

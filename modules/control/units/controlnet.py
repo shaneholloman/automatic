@@ -5,7 +5,7 @@ from typing import Union
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, FluxPipeline, StableDiffusion3Pipeline, ControlNetModel
 from modules.control.units import detect
 from modules.shared import log, opts, cmd_opts, state, listdir
-from modules import errors, sd_models, devices, model_quant
+from modules import errors, sd_models, devices, model_quant # pylint: disable=unused-import
 from modules.processing import StableDiffusionProcessingControl
 
 
@@ -318,27 +318,27 @@ class ControlNet():
                 model_id = model_id or self.model_id
                 if model_id is None or model_id == 'None':
                     self.reset()
-                    return
+                    return ''
                 if model_id not in all_models:
                     log.error(f'Control {what}: id="{model_id}" available={list(all_models)} unknown model')
-                    return
+                    return ''
                 model_path = all_models[model_id]
                 if model_path == '':
-                    return
+                    return ''
                 if model_path is None:
                     log.error(f'Control {what} model load: id="{model_id}" unknown model id')
-                    return
+                    return ''
                 if 'lora' in model_id.lower():
                     self.model = model_path
-                    return
+                    return ''
                 if model_id == self.model_id and not force:
                     # log.debug(f'Control {what} model: id="{model_id}" path="{model_path}" already loaded')
-                    return
+                    return ''
                 log.debug(f'Control {what} model loading: id="{model_id}" path="{model_path}"')
                 cls, config = self.get_class(model_id)
                 if cls is None:
                     log.error(f'Control {what} model load: id="{model_id}" unknown base model')
-                    return
+                    return ''
                 self.reset()
                 jobid = state.begin(f'Load {what}')
                 if model_path.endswith('.safetensors'):
@@ -363,7 +363,7 @@ class ControlNet():
                         if debug:
                             errors.display(e, 'Control')
                 if self.model is None:
-                    return
+                    return ''
                 if not cmd_opts.lowvram: # lowvram will cause unet<->controlnet to ping-pong but saves more memory
                     self.model.offload_never = True
                 if self.dtype is not None:

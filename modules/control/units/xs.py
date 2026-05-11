@@ -86,19 +86,18 @@ class ControlNetXS():
                 model_id = model_id or self.model_id
                 if model_id is None or model_id == 'None':
                     self.reset()
-                    return
+                    return ''
                 if model_id not in all_models:
                     log.error(f'Control {what} unknown model: id="{model_id}" available={list(all_models)}')
-                    return
+                    return ''
                 model_path = all_models[model_id]
                 if model_path == '':
-                    return
+                    return ''
                 if model_path is None:
                     log.error(f'Control {what} model load failed: id="{model_id}" error=unknown model id')
-                    return
+                    return ''
                 if model_id == self.model_id and not force:
-                    # log.debug(f'Control {what} model: id="{model_id}" path="{model_path}" already loaded')
-                    return
+                    return ''
                 self.load_config['time_embedding_mix'] = time_embedding_mix
                 if opts.offline_mode:
                     self.load_config["local_files_only"] = True
