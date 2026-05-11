@@ -166,11 +166,11 @@ PREVIEWER_LORA_MODULES = [
 
 def remove_attn2(model):
     def recursive_find_module(name, module):
-        if "up_blocks" not in name and "down_blocks" not in name and "mid_block" not in name: return
+        if not "up_blocks" in name and not "down_blocks" in name and not "mid_block" in name: return
         elif "resnets" in name: return
         if hasattr(module, "attn2"):
-            module.attn2 = None
-            module.norm2 = None
+            setattr(module, "attn2", None)
+            setattr(module, "norm2", None)
             return
         for sub_name, sub_module in module.named_children():
             recursive_find_module(f"{name}.{sub_name}", sub_module)
@@ -834,8 +834,8 @@ class InstantIRPipeline(
         )
         if (
             isinstance(self.aggregator, Aggregator)
-            or (is_compiled
-            and isinstance(self.aggregator._orig_mod, Aggregator))
+            or is_compiled
+            and isinstance(self.aggregator._orig_mod, Aggregator)
         ):
             self.check_image(image, prompt, prompt_embeds)
         else:

@@ -2,8 +2,8 @@ import torch
 from PIL import Image
 from torch import Tensor
 from torch.nn import functional as F
+from ..common.half_precision_fixes import safe_pad_operation, safe_interpolate_operation
 from torchvision.transforms import ToTensor, ToPILImage
-from modules.seedvr.src.common.half_precision_fixes import safe_pad_operation, safe_interpolate_operation
 
 def adain_color_fix(target: Image.Image, source: Image.Image):
     # Convert images to tensors

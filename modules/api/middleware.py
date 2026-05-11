@@ -44,7 +44,7 @@ def setup_middleware(app: FastAPI, cmd_opts):
             client = req.scope.get('client', ('0:0.0.0', 0))[0]
             token = req.cookies.get("access-token") or req.cookies.get("access-token-unsecure")
             validate_request(client, endpoint)
-            if cmd_opts.api_log:
+            if (cmd_opts.api_log):
                 if not validate_log(client, endpoint):
                     return res
                 log.info('API user={user} code={code} {prot}/{ver} {method} {endpoint} {client} {duration}'.format( # pylint: disable=consider-using-f-string, logging-format-interpolation

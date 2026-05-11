@@ -354,7 +354,7 @@ def network_load(names, te_multipliers=None, unet_multipliers=None, dyn_dims=Non
             sd_model.set_adapters(adapter_names=lora_diffusers.diffuser_loaded, adapter_weights=lora_diffusers.diffuser_scales)
         except Exception as e:
             if str(e) not in exclude_errors:
-                log.error(f'Network load: type=LoRA action=strength {e!s}')
+                log.error(f'Network load: type=LoRA action=strength {str(e)}')
             if l.debug:
                 errors.display(e, 'LoRA')
         try:
@@ -363,7 +363,7 @@ def network_load(names, te_multipliers=None, unet_multipliers=None, dyn_dims=Non
                 sd_model.unload_lora_weights()
             l.timer.activate += time.time() - t1
         except Exception as e:
-            log.error(f'Network load: type=LoRA action=fuse {e!s}')
+            log.error(f'Network load: type=LoRA action=fuse {str(e)}')
             if l.debug:
                 errors.display(e, 'LoRA')
         shared.sd_model = sd_models.apply_balanced_offload(shared.sd_model, force=True, silent=True) # some layers may end up on cpu without hook

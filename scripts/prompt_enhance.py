@@ -798,7 +798,7 @@ class PromptEnhanceScript(scripts_manager.Script):
             if debug_enabled:
                 errors.display(e, 'Prompt enhance')
             self.busy = False
-            response = f'Error: {e!s}'
+            response = f'Error: {str(e)}'
         finally:
             offload_aux('prompt_enhance')
             devices.torch_gc(force=False, reason='prompt-enhance')

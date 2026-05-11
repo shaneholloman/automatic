@@ -518,8 +518,8 @@ class StableDiffusionXLControlNetXSPipeline(
         )
         if (
             isinstance(self.controlnet, ControlNetXSModel)
-            or (is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetXSModel))
+            or is_compiled
+            and isinstance(self.controlnet._orig_mod, ControlNetXSModel)
         ):
             self.check_image(image, prompt, prompt_embeds)
         else:
@@ -528,8 +528,8 @@ class StableDiffusionXLControlNetXSPipeline(
         # Check `controlnet_conditioning_scale`
         if (
             isinstance(self.controlnet, ControlNetXSModel)
-            or (is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetXSModel))
+            or is_compiled
+            and isinstance(self.controlnet._orig_mod, ControlNetXSModel)
         ):
             if not isinstance(controlnet_conditioning_scale, float):
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")
@@ -1521,8 +1521,8 @@ class StableDiffusionControlNetXSPipeline(
         )
         if (
             isinstance(self.controlnet, ControlNetXSModel)
-            or (is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetXSModel))
+            or is_compiled
+            and isinstance(self.controlnet._orig_mod, ControlNetXSModel)
         ):
             self.check_image(image, prompt, prompt_embeds)
         else:
@@ -1531,8 +1531,8 @@ class StableDiffusionControlNetXSPipeline(
         # Check `controlnet_conditioning_scale`
         if (
             isinstance(self.controlnet, ControlNetXSModel)
-            or (is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetXSModel))
+            or is_compiled
+            and isinstance(self.controlnet._orig_mod, ControlNetXSModel)
         ):
             if not isinstance(controlnet_conditioning_scale, float):
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")

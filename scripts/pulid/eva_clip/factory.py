@@ -18,7 +18,7 @@ from .tokenizer import HFTokenizer, tokenize
 from .utils import resize_clip_pos_embed, resize_evaclip_pos_embed, resize_visual_pos_embed, resize_eva_pos_embed
 
 
-_MODEL_CONFIG_PATHS = [Path(__file__).parent / "model_configs/"]
+_MODEL_CONFIG_PATHS = [Path(__file__).parent / f"model_configs/"]
 _MODEL_CONFIGS = {}  # directory (model_name: config) of model architecture configs
 
 

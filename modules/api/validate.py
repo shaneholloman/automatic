@@ -9,7 +9,6 @@ request_cost = {
     "/run/predict": 0,
     "/sdapi/v1/browser/thumb": 0,
     "/sdapi/v1/network/thumb": 0,
-    "/sdapi/v1/gpu-smi": 0,
     "/sdapi/v1/txt2img": 5,
     "/sdapi/v1/img2img": 5,
     "/sdapi/v1/control": 5,

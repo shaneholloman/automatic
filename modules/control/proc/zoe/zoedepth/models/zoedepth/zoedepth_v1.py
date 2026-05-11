@@ -26,13 +26,13 @@ import itertools
 
 import torch
 import torch.nn as nn
-from ..depth_model import DepthModel  # noqa: TID252
-from ..base_models.midas import MidasCore  # noqa: TID252
-from ..layers.attractor import AttractorLayer, AttractorLayerUnnormed  # noqa: TID252
-from ..layers.dist_layers import ConditionalLogBinomial  # noqa: TID252
-from ..layers.localbins_layers import (Projector, SeedBinRegressor,  # noqa: TID252
+from ..depth_model import DepthModel
+from ..base_models.midas import MidasCore
+from ..layers.attractor import AttractorLayer, AttractorLayerUnnormed
+from ..layers.dist_layers import ConditionalLogBinomial
+from ..layers.localbins_layers import (Projector, SeedBinRegressor,
                                             SeedBinRegressorUnnormed)
-from ..model_io import load_state_from_resource  # noqa: TID252
+from ..model_io import load_state_from_resource
 
 
 class ZoeDepth(DepthModel):
@@ -139,7 +139,7 @@ class ZoeDepth(DepthModel):
                 - probs (torch.Tensor): Output probability distribution of shape (B, n_bins, H, W). Present only if return_probs is True
 
         """
-        b, _c, h, w = x.shape
+        b, c, h, w = x.shape
         # print("input shape ", x.shape)
         self.orig_input_width = w
         self.orig_input_height = h

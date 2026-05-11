@@ -4,6 +4,7 @@
 get list of all samplers and details of current sampler
 """
 
+import sys
 import logging
 import urllib3
 import requests

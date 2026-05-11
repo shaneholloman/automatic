@@ -93,7 +93,7 @@ def civit_update_metadata(raw: bool = False):
                         model.latest_name = f.get('name', '')
                         if model.vername == model.latest:
                             model.status = 'Latest version'
-                        elif any(map(lambda v: v in model.latest_hashes, all_hashes)): # pylint: disable=cell-var-from-loop
+                        elif any(map(lambda v: v in model.latest_hashes, all_hashes)): # pylint: disable=cell-var-from-loop # noqa: C417
                             model.status = 'Update downloaded'
                         else:
                             model.status = 'Update available'

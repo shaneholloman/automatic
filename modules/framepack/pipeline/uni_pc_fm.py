@@ -18,7 +18,7 @@ torch_linalg_solve = None
 
 
 def test_solver():
-    from modules import devices
+    from modules import devices, shared
     try:
         a = torch.randn(50, 50).to(device=devices.device, dtype=torch.float32)
         b = torch.randn(50, 2).to(device=devices.device, dtype=torch.float32)

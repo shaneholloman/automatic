@@ -2,13 +2,16 @@ import inspect
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import math
+from functools import partial
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.loaders import FromOriginalModelMixin, PeftAdapterMixin
-from diffusers.utils import USE_PEFT_BACKEND, logging, scale_lora_layers, unscale_lora_layers
+from diffusers.utils import USE_PEFT_BACKEND, deprecate, logging, scale_lora_layers, unscale_lora_layers
+from diffusers.utils.import_utils import is_torch_npu_available
 from diffusers.utils.torch_utils import maybe_allow_in_graph
 from diffusers.models.attention import AttentionMixin, AttentionModuleMixin, FeedForward
 from diffusers.models.attention_dispatch import dispatch_attention_fn
@@ -527,7 +530,7 @@ class Step1XEditCrossAttnBlock(torch.nn.Module):
         y: torch.Tensor=None,
 
     ):
-        gate_msa, _gate_mlp = self.adaLN_modulation(c).chunk(2, dim=1)
+        gate_msa, gate_mlp = self.adaLN_modulation(c).chunk(2, dim=1)
 
         norm_x = self.norm1(x)
         norm_y = self.norm1_2(y)

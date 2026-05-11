@@ -1,6 +1,7 @@
 # Code borrow from https://github.com/huggingface/diffusers/blob/main/src/diffusers/models/autoencoders/autoencoder_kl.py
 from typing import Dict, Optional, Tuple, Union
 
+import os
 import torch
 import torch.nn as nn
 

@@ -75,7 +75,7 @@ except Exception:
     pass
 
 try:
-    pass # pylint: disable=unused-import,ungrouped-imports
+    import torch.distributed.distributed_c10d as _c10d # pylint: disable=unused-import,ungrouped-imports
 except Exception:
     log.warning('Loader: torch is not built with distributed support')
 
@@ -96,6 +96,7 @@ warnings.filterwarnings(action="ignore", category=UserWarning, module="torchvisi
 torchvision = None
 try:
     import torchvision # pylint: disable=W0611,C0411
+    import pytorch_lightning # pytorch_lightning should be imported after torch, but it re-enables warnings on import so import once to disable them # pylint: disable=W0611,C0411
 except Exception as e:
     report(f'torchvision=={torchvision.__version__ if torchvision is not None else None}', e)
 
@@ -126,6 +127,7 @@ if ".dev" in torch.__version__ or "+git" in torch.__version__:
 timer.startup.record("torch")
 
 try:
+    import bitsandbytes # pylint: disable=unused-import
     _bnb = True
 except Exception:
     _bnb = False
@@ -209,9 +211,10 @@ except Exception as e:
     sys.exit(1)
 
 try:
-    pass # pylint: disable=W0611,C0411
+    import pillow_jxl # pylint: disable=W0611,C0411
 except Exception:
     pass
+from PIL import Image # pylint: disable=W0611,C0411
 timer.startup.record("pillow")
 
 

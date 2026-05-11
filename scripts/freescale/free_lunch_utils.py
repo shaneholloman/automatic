@@ -137,10 +137,10 @@ def register_free_upblock2d(model, b1=1.2, b2=1.4, s1=0.9, s2=0.2):
     for i, upsample_block in enumerate(model.unet.up_blocks):
         if isinstance_str(upsample_block, "UpBlock2D"):
             upsample_block.forward = up_forward(upsample_block)
-            upsample_block.b1 = b1
-            upsample_block.b2 = b2
-            upsample_block.s1 = s1
-            upsample_block.s2 = s2
+            setattr(upsample_block, 'b1', b1)
+            setattr(upsample_block, 'b2', b2)
+            setattr(upsample_block, 's1', s1)
+            setattr(upsample_block, 's2', s2)
 
 
 def register_crossattn_upblock2d(model):
@@ -300,7 +300,7 @@ def register_free_crossattn_upblock2d(model, b1=1.2, b2=1.4, s1=0.9, s2=0.2):
     for i, upsample_block in enumerate(model.unet.up_blocks):
         if isinstance_str(upsample_block, "CrossAttnUpBlock2D"):
             upsample_block.forward = up_forward(upsample_block)
-            upsample_block.b1 = b1
-            upsample_block.b2 = b2
-            upsample_block.s1 = s1
-            upsample_block.s2 = s2
+            setattr(upsample_block, 'b1', b1)
+            setattr(upsample_block, 'b2', b2)
+            setattr(upsample_block, 's1', s1)
+            setattr(upsample_block, 's2', s2)

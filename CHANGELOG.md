@@ -1,12 +1,12 @@
 # Change Log for SD.Next
 
-## Update for 2026-05-11
+## Update for 2026-05-10
 
-### Highlights for 2026-05-11
+### Highlights for 2026-05-10
 
 *What's New?*
 - Image editing models now can work with multiple image inputs!
-- Five new base models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
+- New models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
 - Enhanced capabilities for *Anima*, *Ernie-Image*, *LTX*, *Flux.2* and *Chroma* models
 - UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, and more...
 
@@ -14,7 +14,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
 
 [ReadMe](https://github.com/vladmandic/automatic/blob/master/README.md) | [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md) | [Docs](https://vladmandic.github.io/sdnext-docs/) | [WiKi](https://github.com/vladmandic/automatic/wiki) | [Discord](https://discord.com/invite/sd-next-federal-batch-inspectors-1101998836328697867) | [Sponsor](https://github.com/sponsors/vladmandic)  
 
-### Details for 2026-05-11
+### Details for 2026-05-10
 
 - **Models**
   - [HiDream-O1-Image](https://huggingface.co/HiDream-ai/HiDream-O1-Image) pixel-level unified transformer model support  
@@ -22,7 +22,6 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
     includes both **HiDream-O1-Image** *(base)* and **HiDream-O1-Image-Dev** *(distilled*)* variants  
     includes *T2I* and *I2I edit* capabilities and resolutions up to 2048px   
     *note*: use steps:50 for base and steps:28 for dev variants  
-    *note*: when using quantization, make sure that quantized matmul is disabled, otherwise quality degrades significantly  
   - [JoyAI Image Edit](https://huggingface.co/jdopensource/JoyAI-Image-Edit-Diffusers) image-editing model support  
     includes multimodal conditioning using *Qwen3-VL* with a dedicated *JoyImageEdit* diffusion transformer  
     *note* this is a large model at 50GB so use of agressive quantization is recommended  
@@ -55,7 +54,6 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - custom **VAE** loader for all pipelines  
     *note*: vae still needs to be compatible with the model  
   - **CivitAI** downloaded thumbnails now include metadata  
-  - **Installer** support for `git+http` style references
 - **UI**
   - **Networks** using networks to load model or auto-download a reference model will now be reflected in the UI  
   - ability to manually reorient *input/output* panels
@@ -81,7 +79,6 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - remove obsolete `lora` stepwise and functional code, thanks @awsr
   - interrupt model loading between components
   - patch `rich` for cleaner exception logging
-  - stricter `ruff` linting
 - **Fixes**
   - add missing `jquery` and `sparkline` js scripts
   - save handle already decoded images

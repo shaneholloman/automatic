@@ -15,17 +15,21 @@ log.debug('Initializing: shared module')
 import modules.memmon
 import modules.paths as paths
 from modules.json_helpers import readfile # pylint: disable=W0611
-from modules.shared_helpers import listdir # pylint: disable=W0611
-from modules import errors, devices, shared_state, cmd_args, history, files_cache # pylint: disable=unused-import
+from modules.shared_helpers import listdir, req # pylint: disable=W0611
+from modules import errors, devices, shared_state, cmd_args, theme, history, files_cache # pylint: disable=unused-import
 from modules.shared_defaults import get_default_modes
 from modules.memstats import memory_stats # pylint: disable=unused-import
 
 log.debug('Initializing: pipelines')
+from modules import shared_items # pylint: disable=unused-import
+from modules.caption.openclip import get_clip_models, refresh_clip_models # pylint: disable=unused-import
+from modules.caption.vqa import vlm_models, vlm_prompts, vlm_system, vlm_default # pylint: disable=unused-import
 
 
 if TYPE_CHECKING:
     # Behavior modified by __future__.annotations
     from diffusers import DiffusionPipeline
+    from modules.shared_legacy import LegacyOption
     from modules.ui_extra_networks import ExtraNetworksPage
 
 
@@ -77,6 +81,7 @@ data_path = paths.data_path
 backend = Backend.DIFFUSERS
 if cmd_opts.use_openvino: # override for openvino
     os.environ.setdefault('PYTORCH_TRACING_MODE', 'TORCHFX')
+    from modules.intel.openvino import get_device_list as get_openvino_device_list # pylint: disable=ungrouped-imports,unused-import
 elif cmd_opts.use_ipex or devices.has_xpu():
     from modules.intel.ipex import ipex_init
     ok, e = ipex_init()
@@ -152,6 +157,7 @@ startup_offload_mode, startup_offload_min_gpu, startup_offload_max_gpu, startup_
 
 log.debug('Initializing: settings')
 from modules import ui_definitions
+from modules.ui_definitions import OptionInfo, options_section # pylint: disable=unused-import
 options_templates = ui_definitions.create_settings(cmd_opts)
 from modules.shared_legacy import get_legacy_options
 options_templates.update(get_legacy_options())

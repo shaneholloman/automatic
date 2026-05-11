@@ -15,9 +15,9 @@ from modules import timer, paths, shared, shared_items, modelloader, devices, sc
 from modules.memstats import memory_stats
 from modules.shared_helpers import walk_files
 from modules.modeldata import model_data
-from modules.sd_checkpoint import CheckpointInfo, select_checkpoint, list_models, checkpoint_titles, get_closest_checkpoint_match # pylint: disable=unused-import
+from modules.sd_checkpoint import CheckpointInfo, select_checkpoint, list_models, checkpoint_titles, get_closest_checkpoint_match, update_model_hashes, write_metadata, checkpoints_list # pylint: disable=unused-import
 from modules.sd_offload import get_module_names, disable_offload, set_diffuser_offload, apply_balanced_offload, set_accelerate # pylint: disable=unused-import
-from modules.sd_models_utils import NoWatermark, get_signature, path_to_repo, apply_function_to_model # pylint: disable=unused-import
+from modules.sd_models_utils import NoWatermark, get_signature, get_call, path_to_repo, apply_function_to_model, read_state_dict, get_state_dict_from_checkpoint # pylint: disable=unused-import
 
 
 model_dir = "Stable-diffusion"
@@ -331,6 +331,7 @@ def load_diffuser_initial(diffusers_load_config, op='model'):
 
 
 def load_diffuser_force(detected_model_type, checkpoint_info, diffusers_load_config, op='model'):
+    from modules import sdnq # pylint: disable=unused-import
     sd_model = None
     global allow_post_quant # pylint: disable=global-statement
     unload_model_weights(op=op)

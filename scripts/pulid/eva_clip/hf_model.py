@@ -14,7 +14,7 @@ try:
     from transformers import AutoModel, AutoModelForMaskedLM, AutoTokenizer, AutoConfig, PretrainedConfig
     from transformers.modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling, \
         BaseModelOutputWithPoolingAndCrossAttentions
-except ImportError:
+except ImportError as e:
     transformers = None
 
 

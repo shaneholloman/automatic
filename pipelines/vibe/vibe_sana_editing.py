@@ -3,7 +3,7 @@
 from typing import Any
 
 import torch
-from diffusers import SanaTransformer2DModel
+from diffusers import ModelMixin, SanaTransformer2DModel
 from diffusers.configuration_utils import register_to_config
 from diffusers.models.attention_processor import Attention
 from diffusers.models.embeddings import PatchEmbed, PixArtAlphaTextProjection

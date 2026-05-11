@@ -64,7 +64,7 @@ def run_video(*args):
     selected = get_selected(engine, model)
     if not selected or engine is None or model is None or engine == 'None' or model == 'None':
         return video_utils.queue_err('model not selected')
-    debug(f'Video run: {selected!s}')
+    debug(f'Video run: {str(selected)}')
     if selected and 'Hunyuan' in selected.name:
         return video_run.generate(*args)
     elif selected and 'LTX' in selected.name:

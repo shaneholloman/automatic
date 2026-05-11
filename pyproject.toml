@@ -12,26 +12,43 @@ target-version = "py310"
 exclude = [
     "venv",
     ".git",
-    ".vscode",
     ".ruff_cache",
-    "__pycache__",
-    "node_modules",
-    "modules/teacache",
-    "modules/sharpfin",
-    "modules/seedvr/src",
-    "modules/postprocess/aurasr_arch.py",
-    "modules/flash_attn_triton_amd/utils.py",
-    "modules/control/units/xs_pipe.py",
+    ".vscode",
+    "modules/cfgzero",
+    "modules/flash_attn_triton_amd",
+    "modules/hidiffusion",
+    "modules/intel/ipex",
     "modules/pag",
-    "scripts/consistory",
-    "scripts/daam",
-    "scripts/freescale",
-    "scripts/instantir",
-    "scripts/lbm",
-    "scripts/pulid",
-    "pipelines/xomni",
+    "modules/schedulers",
+    "modules/teacache",
+    "modules/seedvr",
+    "modules/sharpfin",
+    "modules/control/proc",
+    "modules/control/units",
+    "modules/control/units/xs_pipe.py",
+    "modules/postprocess/aurasr_arch.py",
+    "pipelines/meissonic",
     "pipelines/omnigen2",
+    "pipelines/hdm",
+    "pipelines/hidream",
+    "pipelines/segmoe",
+    "pipelines/xomni",
+    "pipelines/chrono",
+    "pipelines/step1x",
+    "pipelines/vibe",
+    "pipelines/ultraflux",
+    "pipelines/lumina_dimmo",
+    "scripts/lbm",
+    "scripts/daam",
+    "scripts/xadapter",
+    "scripts/pulid",
+    "scripts/instantir",
+    "scripts/freescale",
+    "scripts/consistory",
+    "extensions-builtin/Lora",
     "extensions-builtin/sd-extension-chainner/nodes",
+    "extensions-builtin/sd-webui-agent-scheduler",
+    "extensions-builtin/sdnext-modernui/node_modules",
 ]
 
 [tool.ruff.lint]
@@ -64,23 +81,25 @@ ignore = [
     "B008",   # Do not perform function call in argument defaults
     "B905",   # Strict zip() usage
     "C408",   # Unnecessary `dict` call
-    "C417",   # Unnecessary `map` comprehension
-    "C420",   # Unnecessary `dict` comprehension
+    "C420",   # Unnecessary dict comprehension for iterable; use `dict.fromkeys` instead
     "E402",   # Module level import not at top of file
     "E501",   # Line too long
-    "E721",   # Do not compare types
-    "E731",   # Do not assign a `lambda` expression
+    "E721",   # Do not compare types, use `isinstance()`
+    "E731",   # Do not assign a `lambda` expression, use a `def`
     "E741",   # Ambiguous variable name
-    "F401",   # Import unused
-    "I001",   # Import block un-sorted
+    "EXE001", # file with shebang is not marked executable
+    "F401",   # Imported by unused
+    "I001",   # Import block is un-sorted or un-formatted
     "NPY002", # replace legacy random
     "RUF005", # Consider iterable unpacking
     "RUF008", # Do not use mutable default values for dataclass
+    "RUF010", # Use explicit conversion flag
     "RUF012", # Mutable class attributes
     "RUF015", # Prefer `next(...)` over single element slice
     "RUF022", # All is not sorted
     "RUF046", # Value being cast to `int` is already an integer
     "RUF051", # Prefer pop over del
+    "RUF059", # Unpacked variables are not used
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -110,11 +129,12 @@ main.fail-on=""
 main.fail-under=10
 main.ignore="CVS"
 main.ignore-paths=[
+    "venv",
+    "node_modules",
     "__pycache__",
     ".git",
     ".ruff_cache",
     ".vscode",
-    "venv",
     "modules/apg",
     "modules/cfgzero",
     "modules/control/proc",
@@ -122,55 +142,58 @@ main.ignore-paths=[
     "modules/dml",
     "modules/face",
     "modules/flash_attn_triton_amd",
-    "modules/framepack/pipeline",
     "modules/ggml",
     "modules/hidiffusion",
     "modules/hijack/ddpm_edit.py",
     "modules/intel",
     "modules/intel/ipex",
+    "modules/framepack/pipeline",
     "modules/onnx_impl",
     "modules/pag",
     "modules/postprocess/aurasr_arch.py",
     "modules/prompt_parser_xhinker.py",
     "modules/ras",
-    "modules/res4lyf",
-    "modules/rife",
-    "modules/schedulers",
     "modules/seedvr",
     "modules/sharpfin",
+    "modules/rife",
+    "modules/schedulers",
     "modules/taesd",
     "modules/teacache",
     "modules/todo",
-    "node_modules",
+    "modules/res4lyf",
     "pipelines/bria",
-    "pipelines/chrono",
-    "pipelines/f_lite",
     "pipelines/flex2",
-    "pipelines/hdm",
+    "pipelines/f_lite",
     "pipelines/hidream",
-    "pipelines/lumina_dimmo",
+    "pipelines/hdm",
     "pipelines/meissonic",
     "pipelines/omnigen2",
     "pipelines/segmoe",
-    "pipelines/step1x",
-    "pipelines/ultraflux",
-    "pipelines/vibe",
     "pipelines/xomni",
+    "pipelines/chrono",
+    "pipelines/step1x",
+    "pipelines/vibe",
+    "pipelines/ultraflux",
+    "pipelines/lumina_dimmo",
     "scripts/consistory",
     "scripts/ctrlx",
     "scripts/daam",
     "scripts/demofusion",
-    "scripts/differential_diffusion.py",
     "scripts/freescale",
     "scripts/infiniteyou",
     "scripts/instantir",
-    "scripts/layerdiffuse",
     "scripts/lbm",
+    "scripts/layerdiffuse",
     "scripts/mod",
     "scripts/pixelsmith",
+    "scripts/differential_diffusion.py",
     "scripts/pulid",
     "scripts/xadapter",
+    "repositories",
     "extensions-builtin/sd-extension-chainner/nodes",
+    "extensions-builtin/sd-webui-agent-scheduler",
+    "extensions-builtin/sdnext-modernui/node_modules",
+    "extensions-builtin/sdnext-kanvas/node_modules",
 ]
 main.ignore-patterns=[
     ".*test*.py$",

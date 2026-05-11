@@ -170,7 +170,7 @@ class FlowMatchDPMSolverMultistepScheduler(SchedulerMixin, ConfigMixin):
         from installer import install
         install('torchsde==0.2.6', 'torchsde', quiet=True)
         try:
-            pass
+            import torchsde
         except Exception as e:
             raise ImportError("Failed to import torchsde. Please make sure it is installed correctly.") from e
 
@@ -234,7 +234,7 @@ class FlowMatchDPMSolverMultistepScheduler(SchedulerMixin, ConfigMixin):
         return math.exp(mu) / (math.exp(mu) + (1 / t - 1) ** sigma)
 
     def set_timesteps(self,
-        num_inference_steps: int | None = None,
+        num_inference_steps: int = None,
         device: Union[str, torch.device] = None,
         sigmas: Optional[List[float]] = None,
         mu: Optional[float] = None,

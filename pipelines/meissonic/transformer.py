@@ -22,7 +22,7 @@ import torch.nn.functional as F
 
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.loaders import FromOriginalModelMixin, PeftAdapterMixin
-from diffusers.models.attention import FeedForward, SkipFFTransformerBlock
+from diffusers.models.attention import FeedForward, BasicTransformerBlock, SkipFFTransformerBlock
 from diffusers.models.attention_processor import (
     Attention,
     AttentionProcessor,
@@ -30,7 +30,7 @@ from diffusers.models.attention_processor import (
     # FusedFluxAttnProcessor2_0,
 )
 from diffusers.models.modeling_utils import ModelMixin
-from diffusers.models.normalization import AdaLayerNormZero, AdaLayerNormZeroSingle, GlobalResponseNorm, RMSNorm
+from diffusers.models.normalization import AdaLayerNormContinuous, AdaLayerNormZero, AdaLayerNormZeroSingle, GlobalResponseNorm, RMSNorm
 from diffusers.utils import USE_PEFT_BACKEND, is_torch_version, logging, scale_lora_layers, unscale_lora_layers
 from diffusers.utils.torch_utils import maybe_allow_in_graph
 from diffusers.models.embeddings import CombinedTimestepGuidanceTextProjEmbeddings, CombinedTimestepTextProjEmbeddings,TimestepEmbedding, get_timestep_embedding #,FluxPosEmbed

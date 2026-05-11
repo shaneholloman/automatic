@@ -1,5 +1,5 @@
 import gradio as gr
-from diffusers.pipelines import StableDiffusionPipeline # pylint: disable=unused-import
+from diffusers.pipelines import StableDiffusionPipeline, StableDiffusionXLPipeline # pylint: disable=unused-import
 from modules import shared, scripts_manager, processing, sd_models, devices
 from modules.logger import log
 

@@ -222,7 +222,7 @@ def create_ui(gr_status, gr_file):
             if param.name == 'self' or param.name == 'args' or param.name == 'kwargs':
                 continue
             component = Component(param)
-            debug_log(f'Model component: {component!s}')
+            debug_log(f'Model component: {str(component)}')
             components.append(component)
         return components
 

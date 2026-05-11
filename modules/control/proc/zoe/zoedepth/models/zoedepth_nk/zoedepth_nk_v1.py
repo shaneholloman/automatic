@@ -27,14 +27,14 @@ import itertools
 import torch
 import torch.nn as nn
 
-from ..depth_model import DepthModel  # noqa: TID252
-from ..base_models.midas import MidasCore  # noqa: TID252
-from ..layers.attractor import AttractorLayer, AttractorLayerUnnormed  # noqa: TID252
-from ..layers.dist_layers import ConditionalLogBinomial  # noqa: TID252
-from ..layers.localbins_layers import (Projector, SeedBinRegressor,  # noqa: TID252
+from ..depth_model import DepthModel
+from ..base_models.midas import MidasCore
+from ..layers.attractor import AttractorLayer, AttractorLayerUnnormed
+from ..layers.dist_layers import ConditionalLogBinomial
+from ..layers.localbins_layers import (Projector, SeedBinRegressor,
                                             SeedBinRegressorUnnormed)
-from ..layers.patch_transformer import PatchTransformerEncoder  # noqa: TID252
-from ..model_io import load_state_from_resource  # noqa: TID252
+from ..layers.patch_transformer import PatchTransformerEncoder
+from ..model_io import load_state_from_resource
 
 class ZoeDepthNK(DepthModel):
     def __init__(self, core,  bin_conf, bin_centers_type="softplus", bin_embedding_dim=128,
@@ -173,10 +173,10 @@ class ZoeDepthNK(DepthModel):
                 - "bin_centers": Bin centers of shape (B, N, H, W). Present only if return_final_centers is True
                 - "probs": Bin probabilities of shape (B, N, H, W). Present only if return_probs is True
         """
-        b, _c, h, w = x.shape
+        b, c, h, w = x.shape
         self.orig_input_width = w
         self.orig_input_height = h
-        _rel_depth, out = self.core(x, denorm=denorm, return_rel_depth=True)
+        rel_depth, out = self.core(x, denorm=denorm, return_rel_depth=True)
 
         outconv_activation = out[0]
         btlnck = out[1]

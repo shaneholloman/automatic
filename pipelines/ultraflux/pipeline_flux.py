@@ -8,7 +8,7 @@ from transformers import CLIPTextModel, CLIPTokenizer, T5EncoderModel, T5Tokeniz
 
 
 from diffusers.image_processor import VaeImageProcessor
-from diffusers.loaders import FluxLoraLoaderMixin
+from diffusers.loaders import FluxLoraLoaderMixin, FromSingleFileMixin
 from pipelines.ultraflux.autoencoder_kl import AutoencoderUltraFluxKL
 from diffusers.models.transformers import FluxTransformer2DModel
 from diffusers.schedulers import FlowMatchEulerDiscreteScheduler
@@ -430,7 +430,7 @@ class UltraFluxPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
 
     @staticmethod
     def _unpack_latents(latents, height, width, vae_scale_factor):
-        batch_size, _num_patches, channels = latents.shape
+        batch_size, num_patches, channels = latents.shape
 
         height = height // vae_scale_factor
         width = width // vae_scale_factor

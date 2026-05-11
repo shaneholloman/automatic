@@ -31,7 +31,7 @@ def _resize_pos_embed(self, posemb, gs_h, gs_w):
 
 
 def forward_flex(self, x):
-    _b, _c, h, w = x.shape
+    b, c, h, w = x.shape
 
     pos_embed = self._resize_pos_embed(
         self.pos_embed, h // self.patch_size[1], w // self.patch_size[0]
