@@ -1,20 +1,20 @@
 # Change Log for SD.Next
 
-## Update for 2026-05-10
+## Update for 2026-05-11
 
-### Highlights for 2026-05-10
+### Highlights for 2026-05-11
 
 *What's New?*
 - Image editing models now can work with multiple image inputs!
-- New models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
+- Six new models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
 - Enhanced capabilities for *Anima*, *Ernie-Image*, *LTX*, *Flux.2* and *Chroma* models
-- UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, and more...
+- UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, *Networks*, and more...
 
 For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md)  
 
 [ReadMe](https://github.com/vladmandic/automatic/blob/master/README.md) | [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md) | [Docs](https://vladmandic.github.io/sdnext-docs/) | [WiKi](https://github.com/vladmandic/automatic/wiki) | [Discord](https://discord.com/invite/sd-next-federal-batch-inspectors-1101998836328697867) | [Sponsor](https://github.com/sponsors/vladmandic)  
 
-### Details for 2026-05-10
+### Details for 2026-05-11
 
 - **Models**
   - [HiDream-O1-Image](https://huggingface.co/HiDream-ai/HiDream-O1-Image) pixel-level unified transformer model support  
@@ -54,6 +54,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - custom **VAE** loader for all pipelines  
     *note*: vae still needs to be compatible with the model  
   - **CivitAI** downloaded thumbnails now include metadata  
+  - **Installer** support for `git+http` style references
 - **UI**
   - **Networks** using networks to load model or auto-download a reference model will now be reflected in the UI  
   - ability to manually reorient *input/output* panels
@@ -79,6 +80,9 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - remove obsolete `lora` stepwise and functional code, thanks @awsr
   - interrupt model loading between components
   - patch `rich` for cleaner exception logging
+  - lint `ruff` strict and reduce exceptions
+  - lint `pylint` improvements
+  - lint `ty` readiness
 - **Fixes**
   - add missing `jquery` and `sparkline` js scripts
   - save handle already decoded images

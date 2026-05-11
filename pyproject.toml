@@ -367,8 +367,6 @@ exclude = [
     "venv",
 ]
 extraPaths = [
-    "scripts",
-    "pipelines",
 ]
 reportMissingImports = "none"
 reportInvalidTypeForm = "none"
