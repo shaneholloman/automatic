@@ -59,7 +59,7 @@ def list_models(refresh=False):
 
 
 class ControlNetXS():
-    def __init__(self, model_id: str = None, device = None, dtype = None, load_config = None):
+    def __init__(self, model_id: str | None = None, device = None, dtype = None, load_config = None):
         self.model: ControlNetXSModel = None
         self.model_id: str = model_id
         self.device = device
@@ -79,7 +79,7 @@ class ControlNetXS():
         self.model = None
         self.model_id = None
 
-    def load(self, model_id: str = None, time_embedding_mix: float = 0.0, force: bool = True) -> str:
+    def load(self, model_id: str | None = None, time_embedding_mix: float = 0.0, force: bool = True) -> str:
         with load_lock:
             try:
                 t0 = time.time()

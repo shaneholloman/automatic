@@ -1,7 +1,7 @@
 import torch
 from diffusers.models import AutoencoderKL
-from ..base.base_model import BaseModel
-from ..tiler import Tiler, pad
+from lbm.base.base_model import BaseModel
+from lbm.tiler import Tiler, pad
 from .autoencoderKL_config import AutoencoderKLDiffusersConfig
 
 
