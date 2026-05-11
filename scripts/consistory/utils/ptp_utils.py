@@ -99,7 +99,7 @@ class AttentionStore:
 
         torch.cuda.empty_cache()
 
-    def aggregate_last_steps_attention(self) -> torch.Tensor:
+    def aggregate_last_steps_attention(self):
         """Aggregates the attention across the different layers and heads at the specified resolution."""
         attention_maps = torch.cat([torch.stack(x[-20:]) for x in self.step_store.values()]).mean(dim=0)
         bsz, _wh, _ = attention_maps.shape

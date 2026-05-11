@@ -389,6 +389,36 @@ include = [
 exclude = [
     "venv/",
     "*.git/",
+    "scripts/pulid/*",
+    "scripts/pixelsmith/*",
+    "scripts/mod/*",
+    "scripts/layerdiffuse/*",
+    "scripts/lbm/*",
+    "scripts/daam/*",
+    "scripts/infiniteyou/*",
+    "scripts/ctrlx/*",
+    "scripts/consistory/*",
+    "scripts/freescale/*",
+    "scripts/instantir/*",
+    "scripts/softfill.py",
+    "scripts/custom_code.py",
+    "pipelines/zetachroma/",
+    "pipelines/xomni/",
+    "pipelines/vibe/",
+    "pipelines/ultraflux/",
+    "pipelines/step1x/",
+    "pipelines/omnigen2/",
+    "pipelines/meissonic/",
+    "pipelines/model_stablecascade.py",
+    "pipelines/lumina_dimmo",
+    "pipelines/hidream",
+    "pipelines/f_lite",
+    "pipelines/bria",
+    "pipelines/ernie",
+    "pipelines/flex2",   
+    "pipelines/anima",
+    "pipelines/meissonic",
+    "extensions-builtin/sd-extension-chainner/nodes",
 ]
 
 [tool.ty.rules]
@@ -403,3 +433,9 @@ unsupported-base = "ignore"
 possibly-missing-attribute = "ignore"
 invalid-parameter-default = "ignore"
 call-non-callable = "ignore"
+not-subscriptable = "ignore"
+possibly-missing-submodule = "ignore"
+missing-argument = "ignore"
+unknown-argument = "ignore"
+invalid-attribute-access = "ignore"
+call-top-callable = "ignore"

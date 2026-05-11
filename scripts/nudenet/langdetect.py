@@ -3,7 +3,7 @@ repo_id = "facebook/fasttext-language-identification"
 model = None
 
 
-def lang_detect(text:str, top:int=1, threshold:float=0.25) -> str:
+def lang_detect(text:str, top:int=1, threshold:float=0.25) -> str | list[str]:
     try:
         global model # pylint: disable=global-statement
         from modules import shared
