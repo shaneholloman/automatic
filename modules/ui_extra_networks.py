@@ -923,7 +923,10 @@ def create_ui(container, button_parent: gr.Button, tabname: str, skip_indexing =
                 b64str = ui.last_item.preview.split(',',1)[1]
                 img = Image.open(io.BytesIO(base64.b64decode(b64str)))
             elif hasattr(item, 'local_preview') and os.path.exists(item.local_preview):
-                img = item.local_preview
+                if os.path.getsize(item.local_preview) < 1024: # sanity check
+                    img = page.find_preview_file(item.filename)
+                else:
+                    img = item.local_preview
             else:
                 img = page.find_preview_file(item.filename)
 

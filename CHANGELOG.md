@@ -1,20 +1,21 @@
 # Change Log for SD.Next
 
-## Update for 2026-05-11
+## Update for 2026-05-12
 
-### Highlights for 2026-05-11
+### Highlights for 2026-05-12
 
 *What's New?*
 - Image editing models now can work with multiple image inputs!
 - Six new models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
 - Enhanced capabilities for *Anima*, *Ernie-Image*, *LTX*, *Flux.2* and *Chroma* models
+- Enhanced *LoRA* capabilities in many models
 - UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, *Networks*, and more...
 
 For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md)  
 
 [ReadMe](https://github.com/vladmandic/automatic/blob/master/README.md) | [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md) | [Docs](https://vladmandic.github.io/sdnext-docs/) | [WiKi](https://github.com/vladmandic/automatic/wiki) | [Discord](https://discord.com/invite/sd-next-federal-batch-inspectors-1101998836328697867) | [Sponsor](https://github.com/sponsors/vladmandic)  
 
-### Details for 2026-05-11
+### Details for 2026-05-12
 
 - **Models**
   - [HiDream-O1-Image](https://huggingface.co/HiDream-ai/HiDream-O1-Image) pixel-level unified transformer model support  
@@ -106,6 +107,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - `gradio` preprocess exception handling
   - `ipadapters` with offloading
   - `kanvas` outpaint
+  - `network` preview handle invalid image
 
 ## Update for 2026-04-28
 
