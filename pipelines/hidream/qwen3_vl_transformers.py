@@ -1838,9 +1838,6 @@ class HiDreamO1Qwen3VLTransformer(Qwen3VLPreTrainedModel, GenerationMixin):
             The temporal, height and width of feature shape of each image in LLM.
         video_grid_thw (`torch.LongTensor` of shape `(num_videos, 3)`, *optional*):
             The temporal, height and width of feature shape of each video in LLM.
-
-        Example:
-            TODO: Add example
         """
         outputs = self.model(
             input_ids=input_ids,

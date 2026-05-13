@@ -413,7 +413,7 @@ exclude = [
     "pipelines/f_lite",
     "pipelines/bria",
     "pipelines/ernie",
-    "pipelines/flex2",   
+    "pipelines/flex2",
     "pipelines/anima",
     "pipelines/meissonic",
     "extensions-builtin/sd-extension-chainner/nodes",
