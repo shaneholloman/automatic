@@ -140,11 +140,14 @@ def run_settings(*args):
         directml_override_opts()
     if shared.cmd_opts.use_openvino:
         if "Model" not in shared.opts.cuda_compile:
-            log.warning("OpenVINO: Enabling Torch Compile Model")
+            log.warning("OpenVINO: Overriding Torch Compile Model")
             shared.opts.cuda_compile.append("Model")
         if shared.opts.cuda_compile_backend != shared.opts.openvino_compile_backend:
-            log.warning(f"OpenVINO: Enabling Torch Compile backend={shared.opts.openvino_compile_backend}")
+            log.warning(f"OpenVINO: Overriding Torch Compile backend={shared.opts.openvino_compile_backend}")
             shared.opts.cuda_compile_backend = shared.opts.openvino_compile_backend
+        if shared.opts.diffusers_offload_mode != "none":
+            log.warning("OpenVINO: Overriding diffusers_offload_mode=none")
+            shared.opts.diffusers_offload_mode = "none"
     if shared.opts.sd_backend != "diffusers":
         log.error('Legacy option: backend=original is no longer supported')
         shared.opts.sd_backend = "diffusers"
@@ -157,10 +160,10 @@ def run_settings(*args):
         return shared.opts.dumpjson(), f'{len(changed)} Settings changed without save: {", ".join(changed)}'
     return shared.opts.dumpjson(), f'{len(changed)} Settings changed{": " if len(changed) > 0 else ""}{", ".join(changed)}'
 
-def run_settings_single(value, key, progress=False):
+def run_settings_single(value, key, progress=False, force=False):
     if not shared.opts.same_type(value, shared.opts.data_labels[key].default):
         return gr.update(visible=True), shared.opts.dumpjson()
-    if not shared.opts.set(key, value):
+    if not shared.opts.set(key, value, force):
         return gr.update(value=getattr(shared.opts, key)), shared.opts.dumpjson()
     if key == "cuda_compile_backend" and value == "olive-ai":
         from modules.onnx_impl import install_olive
@@ -168,9 +171,9 @@ def run_settings_single(value, key, progress=False):
     if shared.cmd_opts.use_directml:
         from modules.dml import directml_override_opts
         directml_override_opts()
-    shared.opts.save()
-    if key not in ['sd_model_checkpoint', 'sd_model_refiner', 'sd_vae', 'sd_te', 'sd_unet']:
-        log.debug(f'Setting changed: {key}={value} progress={progress}')
+    shared.opts.save(silent=True)
+    if key not in ['sd_model_checkpoint', 'sd_model_refiner', 'sd_vae', 'sd_te', 'sd_unet'] or force:
+        log.debug(f'Setting changed: {key}="{value}" progress={progress} force={force}')
     return get_value_for_setting(key), shared.opts.dumpjson()
 
 
@@ -203,8 +206,8 @@ def create_ui(disabled_tabs=None):
             unload_sd_model.click(fn=unload_sd_weights, inputs=[], outputs=[])
             reload_sd_model.click(fn=reload_sd_weights, inputs=[], outputs=[])
             enable_profiling.click(fn=switch_profiling, inputs=[], outputs=[enable_profiling])
-            restart_submit.click(fn=lambda: shared.restart_server(restart=True), _js="restartReload")
-            shutdown_submit.click(fn=lambda: shared.restart_server(restart=False), _js="restartReload")
+            restart_submit.click(fn=lambda: shared.restart_server(restart=True), _js="() => { restartReload(); }")
+            shutdown_submit.click(fn=lambda: shared.restart_server(restart=False), _js="() => { restartReload(); }")
 
     with gr.Tabs(elem_id="system") as system_tabs:
         global ui_system_tabs # pylint: disable=global-statement
@@ -310,7 +313,7 @@ def create_ui(disabled_tabs=None):
         outputs=[text_settings, result],
     )
     if defaults_submit:
-        defaults_submit.click(fn=lambda: shared.restore_defaults(restart=True), _js="restartReload")
+        defaults_submit.click(fn=lambda: shared.restore_defaults(restart=True), _js="() => { restartReload(); }")
 
 
 def reset_quicksettings(quick_components):
@@ -377,7 +380,7 @@ def create_quicksettings(interfaces):
 
         button_set_checkpoint = gr.Button('Change model', elem_id='change_checkpoint', visible=False)
         button_set_checkpoint.click(
-            fn=lambda value, _: run_settings_single(value, key='sd_model_checkpoint'),
+            fn=lambda value, _: run_settings_single(value, key='sd_model_checkpoint', force=True),
             _js="function(v){ var res = desiredCheckpointName; desiredCheckpointName = ''; return [res || v, null]; }",
             inputs=[shared.settings_components['sd_model_checkpoint'], dummy_component],
             outputs=[shared.settings_components['sd_model_checkpoint'], text_settings],

@@ -358,7 +358,7 @@ function insertExtraNetwork(textarea, item, kind) {
 }
 
 /** Insert a tag at the current word position, replacing the typed prefix. */
-function insertTag(textarea, tagName) {
+function insertTag(textarea, tagName, kind = 'tag') {
   const info = getCurrentWord(textarea);
   if (!info || (info.mode !== 'tag' && info.mode !== 'artist')) return;
   const { value } = textarea;
@@ -371,13 +371,13 @@ function insertTag(textarea, tagName) {
   const prefix = needsSepBefore ? `${sep} ` : '';
   let suffix = `${sep} `;
   if (after.length > 0 && after.trimStart().startsWith(',')) suffix = ' ';
-  // Artist mode: optionally keep the `@` prefix (Anima syntax); always convert underscores to spaces
-  // since Anima requires space-separated artist names. The `@` is consumed for non-Anima models.
+  // Embedding names are file-system identifiers, so underscores must be preserved regardless of the user setting.
+  // Tags and artists honor `autocomplete_keep_underscores`; default is to swap `_` for space.
+  const keepUnderscores = window.opts?.autocomplete_keep_underscores ?? false;
   let body = tagName;
-  if (info.mode === 'artist') {
-    body = body.replace(/_/g, ' ');
-    if (window.opts?.autocomplete_at_prefix_artist) body = `@${body}`;
-  }
+  if (kind !== 'embed' && !keepUnderscores) body = body.replace(/_/g, ' ');
+  // Artist mode optionally keeps the `@` prefix (Anima syntax). The `@` is consumed for non-Anima models.
+  if (info.mode === 'artist' && window.opts?.autocomplete_at_prefix_artist) body = `@${body}`;
   const insertion = `${prefix}${escapeParensForPrompt(body)}${suffix}`;
   textarea.value = before.trimEnd() + (before.trimEnd().length > 0 ? ' ' : '') + insertion + after.trimStart();
   // Position cursor after the inserted tag + separator
@@ -447,7 +447,7 @@ const dropdown = {
   },
 
   render() {
-    const replaceUnderscores = window.opts?.autocomplete_replace_underscores ?? true;
+    const keepUnderscores = window.opts?.autocomplete_keep_underscores ?? false;
     const queryNorm = this.query.toLowerCase().replace(/ /g, '_');
     this.listEl.replaceChildren();
     this.results.forEach((tag, i) => {
@@ -462,7 +462,9 @@ const dropdown = {
       dot.title = kind === 'tag' ? (engine.categoryNames[tag.category] || '') : kind;
       const name = document.createElement('span');
       name.className = 'autocomplete-tag';
-      const tagText = replaceUnderscores ? tag.display.replace(/_/g, ' ') : tag.display;
+      // Embeddings are file-name identifiers, so they always render as-is to match how they get inserted.
+      const swapForKind = kind !== 'embed';
+      const tagText = (swapForKind && !keepUnderscores) ? tag.display.replace(/_/g, ' ') : tag.display;
       const canonicalMatch = tag.name.indexOf(queryNorm);
       if (canonicalMatch >= 0 && queryNorm.length > 0) {
         const mark = document.createElement('mark');
@@ -480,7 +482,7 @@ const dropdown = {
       if (tag.matchedVia === 'alias') annotationTerm = tag.matchedAlias;
       else if (tag.matchedVia === 'translation') annotationTerm = tag.matchedTerm;
       if (annotationTerm) {
-        const annotationDisplay = replaceUnderscores ? annotationTerm.replace(/_/g, ' ') : annotationTerm;
+        const annotationDisplay = (swapForKind && !keepUnderscores) ? annotationTerm.replace(/_/g, ' ') : annotationTerm;
         const annotationLower = annotationTerm.toLowerCase();
         const annotationMatch = annotationLower.indexOf(queryNorm);
         const prefix = tag.matchedVia === 'translation' ? ' \u{1F310} ' : ' (';
@@ -561,7 +563,7 @@ const dropdown = {
         insertExtraNetwork(this.textarea, result, result.kind);
       } else {
         // 'embed' kind and untagged tag results both go through insertTag (comma-aware, paren-escaped).
-        insertTag(this.textarea, result.display ?? result.name);
+        insertTag(this.textarea, result.display ?? result.name, result.kind);
       }
     }
     this.hide();
@@ -745,24 +747,24 @@ async function initAutocomplete() {
   log('autoComplete', { active, enabled });
   // Inject styles (CSS files in javascript/ are not auto-loaded)
   const style = document.createElement('style');
-  style.textContent = [
-    '.autocompleteResults { position: fixed; z-index: 9999; max-height: 300px; overflow-y: auto;',
-    '  background: var(--sd-main-background-color, var(--background-fill-primary, #1f2937));',
-    '  border: 1px solid var(--sd-input-border-color, var(--border-color-primary, #374151));',
-    '  border-radius: var(--sd-border-radius, 6px); box-shadow: 0 4px 16px rgba(0,0,0,0.4);',
-    '  font-size: 13px; scrollbar-width: thin; }',
-    '.autocompleteResultsList { list-style: none; margin: 0; padding: 4px 0; }',
-    '.autocompleteResultsList > li { display: flex; align-items: center; padding: 6px 12px; cursor: pointer;',
-    '  gap: 8px; line-height: 1.4; transition: background 0.1s ease; border-bottom: 1px solid rgba(255,255,255,0.03); }',
-    '.autocompleteResultsList > li:last-child { border-bottom: none; }',
-    '.autocompleteResultsList > li:hover { background: var(--sd-panel-background-color, var(--input-background-fill-focus, #374151)); }',
-    '.autocompleteResultsList > li.selected { background: var(--sd-main-accent-color, var(--button-primary-background-fill, #4b5563)); }',
-    '.autocomplete-category { font-size: 10px; flex-shrink: 0; width: 10px; text-align: center; cursor: help; }',
-    '.autocomplete-tag { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
-    '.autocomplete-tag mark { background: transparent; color: inherit; font-weight: 700; }',
-    '.autocomplete-count { font-size: 0.75em; opacity: 0.45; flex-shrink: 0; font-variant-numeric: tabular-nums;',
-    '  background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 8px; min-width: 28px; text-align: right; }',
-  ].join('\n');
+  style.textContent = `
+    .autocompleteResults { position: fixed; z-index: 9999; max-height: 300px; overflow-y: auto;
+      background: var(--sd-main-background-color, var(--background-fill-primary, #1f2937));
+      border: 1px solid var(--sd-input-border-color, var(--border-color-primary, #374151));
+      border-radius: var(--sd-border-radius, 6px); box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      font-size: 13px; scrollbar-width: thin; color: var(--body-text-color-subdued); }
+    .autocompleteResultsList { list-style: none; margin: 0; padding: 4px 0; }
+    .autocompleteResultsList > li { display: flex; align-items: center; padding: 6px 12px; cursor: pointer;
+      gap: 8px; line-height: 1.4; transition: background 0.1s ease; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .autocompleteResultsList > li:last-child { border-bottom: none; }
+    .autocompleteResultsList > li:hover { background: var(--sd-panel-background-color, var(--input-background-fill-focus, #374151)); }
+    .autocompleteResultsList > li.selected { background: var(--sd-main-accent-color, var(--button-primary-background-fill, #4b5563)); }
+    .autocomplete-category { font-size: 10px; flex-shrink: 0; width: 10px; text-align: center; cursor: help; }
+    .autocomplete-tag { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .autocomplete-tag mark { background: transparent; color: inherit; font-weight: 700; }
+    .autocomplete-count { font-size: 0.75em; opacity: 0.45; flex-shrink: 0; font-variant-numeric: tabular-nums;
+      background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 8px; min-width: 28px; text-align: right; }
+  `;
   document.head.appendChild(style);
   dropdown.init();
   await engine.loadEnabled();

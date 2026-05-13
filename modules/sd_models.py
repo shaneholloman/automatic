@@ -51,13 +51,16 @@ pipe_switch_task_exclude = [
     'NucleusMoEImagePipeline',
     'AuraFlowPipeline',
     'ChronoEditPipeline',
+    'Kandinsky5I2IPipeline',
     'GoogleNanoBananaPipeline',
+    'Step1XEditPipeline',
 ]
 i2i_pipes = [
     'LEditsPPPipelineStableDiffusion', 'LEditsPPPipelineStableDiffusionXL',
     'OmniGenPipeline', 'OmniGen2Pipeline',
     'StableDiffusionAdapterPipeline', 'StableDiffusionXLAdapterPipeline',
     'StableDiffusionControlNetXSPipeline', 'StableDiffusionXLControlNetXSPipeline',
+    'Step1XEditPipeline',
 ]
 
 
@@ -374,6 +377,10 @@ def load_diffuser_force(detected_model_type, checkpoint_info, diffusers_load_con
             from pipelines.model_auraflow import load_auraflow
             sd_model = load_auraflow(checkpoint_info, diffusers_load_config)
             allow_post_quant = False
+        elif model_type in ['UltraFlux']:
+            from pipelines.model_ultraflux import load_ultraflux
+            sd_model = load_ultraflux(checkpoint_info, diffusers_load_config)
+            allow_post_quant = False
         elif model_type in ['FLUX']:
             from pipelines.model_flux import load_flux
             sd_model = load_flux(checkpoint_info, diffusers_load_config)
@@ -426,6 +433,10 @@ def load_diffuser_force(detected_model_type, checkpoint_info, diffusers_load_con
             from pipelines.model_omnigen import load_omnigen
             sd_model = load_omnigen(checkpoint_info, diffusers_load_config)
             allow_post_quant = False
+        elif model_type in ['HiDreamO1']:
+            from pipelines.model_hidream import load_hidream_o1
+            sd_model = load_hidream_o1(checkpoint_info, diffusers_load_config)
+            allow_post_quant = False
         elif model_type in ['HiDream']:
             from pipelines.model_hidream import load_hidream
             sd_model = load_hidream(checkpoint_info, diffusers_load_config)
@@ -462,6 +473,10 @@ def load_diffuser_force(detected_model_type, checkpoint_info, diffusers_load_con
             from pipelines.model_vibe import load_vibe
             sd_model = load_vibe(checkpoint_info, diffusers_load_config)
             allow_post_quant = False
+        elif model_type in ['Joy']:
+            from pipelines.model_joy import load_joy
+            sd_model = load_joy(checkpoint_info, diffusers_load_config)
+            allow_post_quant = False
         elif model_type in ['Qwen']:
             from pipelines.model_qwen import load_qwen
             sd_model = load_qwen(checkpoint_info, diffusers_load_config)
@@ -482,7 +497,7 @@ def load_diffuser_force(detected_model_type, checkpoint_info, diffusers_load_con
             from pipelines.model_kandinsky import load_kandinsky3
             sd_model = load_kandinsky3(checkpoint_info, diffusers_load_config)
             allow_post_quant = False
-        elif model_type in ['Kandinsky 5.0'] and model_type:
+        elif model_type in ['Kandinsky 5.0']:
             from pipelines.model_kandinsky import load_kandinsky5
             sd_model = load_kandinsky5(checkpoint_info, diffusers_load_config)
             allow_post_quant = False
@@ -963,16 +978,38 @@ def load_diffuser(checkpoint_info=None, op='model', revision=None): # pylint: di
             move_model(sd_model, devices.device)
         timer.load.record("move")
 
-        if shared.opts.ipex_optimize:
-            sd_model = sd_models_compile.ipex_optimize(sd_model)
-
-        if ('Model' in shared.opts.cuda_compile and shared.opts.cuda_compile_backend != 'none'):
-            sd_model = sd_models_compile.compile_diffusers(sd_model)
-        timer.load.record("compile")
-
     except Exception as e:
         log.error(f"Load {op}: {e}")
         errors.display(e, "Model")
+
+    try:
+        if shared.opts.ipex_optimize:
+            sd_model = sd_models_compile.ipex_optimize(sd_model)
+
+        if (shared.opts.cuda_compile_backend != 'none') and len(shared.opts.cuda_compile) > 0:
+            if 'components' in shared.opts.cuda_compile_options:
+                sd_model = sd_models_compile.compile_diffusers(sd_model, apply_to_components=True)
+            else:
+                if 'Model' in shared.opts.cuda_compile:
+                    if hasattr(sd_model, "unet"):
+                        sd_model.unet = sd_models_compile.compile_diffusers(sd_model.unet, apply_to_components=False)
+                    if hasattr(sd_model, "transformer"):
+                        sd_model.transformer = sd_models_compile.compile_diffusers(sd_model.transformer, apply_to_components=False)
+                if 'TE' in shared.opts.cuda_compile:
+                    if hasattr(sd_model, "text_encoder"):
+                        sd_model.text_encoder = sd_models_compile.compile_diffusers(sd_model.text_encoder, apply_to_components=False)
+                    if hasattr(sd_model, "text_encoder_2"):
+                        sd_model.text_encoder_2 = sd_models_compile.compile_diffusers(sd_model.text_encoder_2, apply_to_components=False)
+                    if hasattr(sd_model, "text_encoder_3"):
+                        sd_model.text_encoder_3 = sd_models_compile.compile_diffusers(sd_model.text_encoder_3, apply_to_components=False)
+                if 'VAE' in shared.opts.cuda_compile:
+                    if hasattr(sd_model, "vae"):
+                        sd_model.vae = sd_models_compile.compile_diffusers(sd_model.vae, apply_to_components=False)
+
+        timer.load.record("compile")
+    except Exception as e:
+        log.error(f"Compile {op}: {e}")
+        errors.display(e, "Compile")
 
     if shared.opts.diffusers_offload_mode != 'balanced':
         devices.torch_gc(force=True, reason='load')
@@ -1252,6 +1289,8 @@ def set_diffuser_pipe(pipe, new_pipe_type):
             fn = f'{sys._getframe(2).f_code.co_name}:{sys._getframe(1).f_code.co_name}' # pylint: disable=protected-access
             log.trace(f"Pipeline class change requested: target={new_pipe_type} fn={fn}") # pylint: disable=protected-access
             log.warning(f'Pipeline class change failed: type={new_pipe_type} pipeline={cls} {e}')
+            if debug_load:
+                errors.display(e, 'Pipeline switch')
             has_errors = True
     if not hasattr(pipe, 'config') or has_errors:
         try: # maybe a wrapper pipeline so just change the class
@@ -1269,6 +1308,8 @@ def set_diffuser_pipe(pipe, new_pipe_type):
                 return pipe
         except Exception as e: # pylint: disable=unused-variable
             log.warning(f'Pipeline class set failed: type={new_pipe_type} pipeline={cls} {e}')
+            if debug_load:
+                errors.display(e, 'Pipeline switch')
             has_errors = True
             return pipe
 
@@ -1290,7 +1331,7 @@ def set_diffuser_pipe(pipe, new_pipe_type):
         add_noise_pred_to_diffusers_callback(new_pipe.pipe)
 
     fn = f'{sys._getframe(2).f_code.co_name}:{sys._getframe(1).f_code.co_name}' # pylint: disable=protected-access
-    log.debug(f"Pipeline class change: original={cls} target={new_pipe.__class__.__name__} device={pipe.device} fn={fn}") # pylint: disable=protected-access
+    log.debug(f"Pipeline class change: source={cls} target={new_pipe.__class__.__name__} device={pipe.device} fn={fn}") # pylint: disable=protected-access
 
     if shared.opts.diffusers_offload_mode == 'none':
         move_model(new_pipe, pipe.device)
@@ -1482,3 +1523,13 @@ def save_model(name: str, path: str | None = None, shard: str = "5GB", overwrite
         log.error(f'Save model: path="{model_name}" {e}')
         errors.display(e, 'Save model')
         return f'Error: {e}'
+
+
+def list_hfcache():
+    checkpoints = []
+    for f in os.scandir(shared.opts.hfcache_dir):
+        if not os.path.isdir(f) or not f.name.startswith('models--'):
+            continue
+        checkpoint = CheckpointInfo(filename=f.path, name=path_to_repo(f.name), model_type='hfcache')
+        checkpoints.append(checkpoint)
+    return checkpoints

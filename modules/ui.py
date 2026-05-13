@@ -79,7 +79,7 @@ def create_ui(startup_timer = None) -> gr.Blocks:
     interfaces.clear()
     shared.opts.ui_disabled = ui_disabled
     if len(ui_disabled) > 0:
-        log.warning(f'UI disabled: {ui_disabled}')
+        log.info(f'UI disabled: {ui_disabled}')
 
     if 'txt2img' not in ui_disabled:
         with gr.Blocks(analytics_enabled=False) as txt2img_interface:

@@ -37,7 +37,7 @@ log = logging.getLogger('sdnext.installer')
 debug = log.debug if os.environ.get('SD_INSTALL_DEBUG', None) is not None else lambda *args, **kwargs: None
 setuptools, distutils = None, None # defined via ensure_base_requirements
 current_branch = None
-pip_log = '--log pip.log ' if os.environ.get('SD_PIP_DEBUG', None) is not None else ''
+pip_log = '--log pip.log' if os.environ.get('SD_PIP_DEBUG', None) is not None else ''
 log_file = os.path.join(os.path.dirname(__file__), 'sdnext.log')
 hostname = socket.gethostname()
 log_rolled = False
@@ -75,7 +75,7 @@ extensions_commit = { # force specific commit for extensions
     'adetailer': 'a89c01d'
     # 'stable-diffusion-webui-images-browser': '27fe4a7',
 }
-control_extensions = [ # 3rd party extensions marked as safe for control ui
+control_extensions = [ # extensions marked as safe for control ui
     'NudeNet',
     'IP Adapters',
     'Remove background',
@@ -244,26 +244,35 @@ def cleanup_broken_packages():
         pass
 
 
-def pip(arg: str, ignore: bool = False, quiet: bool = True, uv = True) -> tuple[subprocess.CompletedProcess, str]:
+def pip(arg: str, ignore: bool = False, quiet: bool = True, *, uv = True, constraints = True) -> tuple[subprocess.CompletedProcess | None, str]:
     t_start = time.time()
     originalArg = arg
-    arg = arg.replace('>=', '==')
+    arg = arg.replace('>=', '==').strip()
     if opts.get('offline_mode', False):
         log.warning('Offline mode enabled')
         return None, 'offline'
-    package = arg.replace("install", "").replace("--upgrade", "").replace("--no-deps", "").replace("--force-reinstall", "").replace(" ", " ").strip()
+    package = arg.replace("install", "").replace("--upgrade", "").replace("--no-deps", "").replace("--force-reinstall", "").strip()
     uv = uv and args.uv and not package.startswith('git+')
     pipCmd = "uv pip" if uv else "pip"
     if not quiet and '-r ' not in arg:
         log.info(f'Install: package="{package}" mode={"uv" if uv else "pip"}')
-    env_args = os.environ.get("PIP_EXTRA_ARGS", "")
-    all_args = f'{pip_log}{arg} {env_args}'.strip()
+    env_args = os.environ.get("PIP_EXTRA_ARGS", "").strip()
+    all_args: list[str] = []
+    if pip_log:
+        all_args.append(pip_log)
+    all_args.append(arg)
+    if env_args:
+        all_args.append(env_args)
+    if constraints and "-c " not in env_args:
+        all_args.append("-c constraints.txt")
     if not quiet:
-        log.debug(f'Running: {pipCmd}="{all_args}"')
-    result, output = run(sys.executable, "-m", pipCmd, all_args)
+        log.debug(f'Running: {pipCmd}="{" ".join(all_args)}"')
+
+    result, output = run(sys.executable, "-m", pipCmd, *all_args)
+
     if len(result.stderr) > 0:
         if uv and result.returncode != 0:
-            log.warning(f'Install: cmd="{pipCmd}" args="{all_args}" cannot use uv, fallback to pip')
+            log.warning(f'Install: cmd="{pipCmd}" args="{" ".join(all_args)}" cannot use uv, fallback to pip')
             debug(f'Install: uv pip error: {result.stderr}')
             cleanup_broken_packages()
             return pip(originalArg, ignore, quiet, uv=False)
@@ -485,7 +494,7 @@ def check_diffusers():
     t_start = time.time()
     if args.skip_all:
         return
-    target_commit = "0f1abc4ae8b0eb2a3b40e82a310507281144c423" # diffusers commit hash == 0.37.1.dev-0427
+    target_commit = "015da50b40ee7a082ea8c17a8c43dff717c9653e" # diffusers commit hash == 0.37.1.dev-0427
     # if args.use_rocm or args.use_zluda or args.use_directml:
     #     sha = '043ab2520f6a19fce78e6e060a68dbc947edb9f9' # lock diffusers versions for now
     pkg = package_spec('diffusers')
@@ -521,7 +530,7 @@ def check_transformers():
     else:
         # target_transformers = '4.57.6'
         target_transformers = None
-        target_tokenizers = '0.22.2'
+        target_tokenizers = '0.23.1'
     if target_transformers is not None:
         # Pinned release version (e.g. DirectML)
         if (pkg_transformers is None) or ((pkg_transformers.version != target_transformers) or (pkg_tokenizers is None) or ((pkg_tokenizers.version != target_tokenizers) and (not args.experimental))):
@@ -1279,7 +1288,6 @@ def install_requirements():
 # set environment variables controling the behavior of various libraries
 def set_environment():
     log.debug('Setting environment tuning')
-    os.environ.setdefault('PIP_CONSTRAINT', 'constraints.txt')
     os.environ.setdefault('ACCELERATE', 'True')
     os.environ.setdefault('ATTN_PRECISION', 'fp16')
     os.environ.setdefault('ClDeviceGlobalMemSizeAvailablePercent', '100')
@@ -1374,7 +1382,16 @@ def get_version(force=False):
         try:
             origin = run('git', 'remote get-url origin', check=True)[0].stdout
             branch_name = run('git', 'rev-parse --abbrev-ref HEAD', check=True)[0].stdout
-            version['url'] = origin.removesuffix('.git') + '/tree/' + branch_name
+            # normalize ssh remotes (git@host:owner/repo) and ssh-protocol remotes
+            # (ssh://git@host/owner/repo) to the canonical https form so downstream
+            # url parsers don't have to special-case each remote shape
+            if origin.startswith('git@'):
+                host, _, path = origin.partition(':')
+                origin = f'https://{host[4:]}/{path}'
+            elif origin.startswith('ssh://'):
+                origin = 'https://' + origin[len('ssh://'):].split('@', 1)[-1]
+            origin = origin.removesuffix('.git')
+            version['url'] = origin + '/tree/' + branch_name
             version['branch'] = branch_name
             if version['branch'] == 'HEAD':
                 log.warning('Version: detached state detected')
@@ -1530,7 +1547,10 @@ def check_version(reset=True): # pylint: disable=unused-argument
             api_base = f'https://api.github.com/repos/{url_parts}'
         else:
             api_base = 'https://api.github.com/repos/vladmandic/sdnext'
-        branches = requests.get(f'{api_base}/branches', timeout=10).json()
+        branches = requests.get(f'{api_base}/branches', timeout=5).json()
+        if not isinstance(branches, list):
+            log.error(f'Repository: branches API returned {branches!r} from {api_base}')
+            return
         branch_names = [b['name'] for b in branches if 'name' in b]
         log.trace(f'Repository branches: active={branch_name} available={branch_names}')
     except Exception as e:
@@ -1541,7 +1561,7 @@ def check_version(reset=True): # pylint: disable=unused-argument
         ts('latest', t_start)
         return
     try:
-        commits = requests.get(f'{api_base}/branches/{branch_name}', timeout=10).json()
+        commits = requests.get(f'{api_base}/branches/{branch_name}', timeout=5).json()
         latest = commits['commit']['sha']
         if len(latest) != 40:
             log.error(f'Repository error: commit={latest} invalid')

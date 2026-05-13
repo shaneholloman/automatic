@@ -150,8 +150,8 @@ def image_guard(image, policy:str | None=None, model_name:str=''):
         prompt = processor.apply_chat_template(chat_template, add_generation_prompt=True)
         inputs = processor(text=prompt, images=image, return_tensors="pt")
         input_ids = inputs.input_ids
-        model = model.to(device=devices.device)
-        inputs = {k: v.to(device=devices.device) for k, v in inputs.items()}
+        model = model.to(devices.device)
+        inputs = {k: v.to(devices.device) for k, v in inputs.items()}
         kwargs = {
             "max_new_tokens": 200,
             "do_sample": True,
@@ -162,7 +162,7 @@ def image_guard(image, policy:str | None=None, model_name:str=''):
             "use_cache": True,
         }
         generated_ids = model.generate(**inputs, **kwargs)
-        model = model.to(device=devices.cpu)
+        model = model.to(devices.cpu)
 
         trimmed_ids = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(input_ids, generated_ids)]
         # output_text = processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)

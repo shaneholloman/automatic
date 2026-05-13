@@ -35,7 +35,7 @@ class StyleAlignedScript(scripts_manager.Script):
 
     def ui(self, _is_img2img): # ui elements
         with gr.Row():
-            gr.HTML('<a href="https://github.com/google/style-aligned">&nbsp Style Aligned Image Generation</a><br><br>')
+            gr.HTML('<a href="https://github.com/google/style-aligned">&nbsp Style Aligned Image Generation</a><br>')
         with gr.Row():
             preset = gr.Dropdown(label="Preset", choices=['text', 'image', 'all'], value='text')
             scheduler = gr.Checkbox(label="Override scheduler", value=False)

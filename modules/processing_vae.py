@@ -68,7 +68,7 @@ def full_vqgan_decode(latents, model):
         decoded = []
 
     # delete vae after OpenVINO compile
-    if 'VAE' in shared.opts.cuda_compile and shared.compiled_model_state.first_pass_vae and (shared.opts.cuda_compile_backend == "openvino_fx" or shared.opts.cuda_compile_backend == "openvino"):
+    if ('VAE' in shared.opts.cuda_compile) and getattr(shared.compiled_model_state, 'first_pass_vae', False) and (shared.opts.cuda_compile_backend == "openvino_fx" or shared.opts.cuda_compile_backend == "openvino"):
         shared.compiled_model_state.first_pass_vae = False
         if not shared.opts.openvino_disable_memory_cleanup and hasattr(shared.sd_model, "vqgan"):
             model.vqgan.apply(sd_models_utils.convert_to_faketensors)
@@ -163,7 +163,7 @@ def full_vae_decode(latents, model):
         del model.vae.orig_dtype
 
     # delete vae after OpenVINO compile
-    if 'VAE' in shared.opts.cuda_compile and shared.compiled_model_state.first_pass_vae and (shared.opts.cuda_compile_backend == "openvino_fx" or shared.opts.cuda_compile_backend == "openvino"):
+    if ('VAE' in shared.opts.cuda_compile) and getattr(shared.compiled_model_state, 'first_pass_vae', False) and (shared.opts.cuda_compile_backend == "openvino_fx" or shared.opts.cuda_compile_backend == "openvino"):
         shared.compiled_model_state.first_pass_vae = False
         if not shared.opts.openvino_disable_memory_cleanup and hasattr(shared.sd_model, "vae"):
             model.vae.apply(sd_models_utils.convert_to_faketensors)
@@ -187,7 +187,7 @@ def full_vae_encode(image, model):
         log_debug('Moving to CPU: model=UNet')
         unet_device = model.unet.device
         sd_models.move_model(model.unet, devices.cpu)
-    if not shared.opts.diffusers_offload_mode == "sequential" and hasattr(model, 'vae'):
+    if shared.opts.diffusers_offload_mode != "sequential" and hasattr(model, 'vae'):
         sd_models.move_model(model.vae, devices.device)
     vae_name = sd_vae.loaded_vae_file if sd_vae.loaded_vae_file is not None else "default"
     log_debug(f'Encode vae="{vae_name}" dtype={model.vae.dtype} upcast={model.vae.config.get("force_upcast", None)}')
@@ -247,6 +247,8 @@ def vae_postprocess(tensor, model, output_type='np'):
                 if tensor.ndim == 6 and tensor.shape[1] == 1:
                     tensor = tensor.squeeze(0)
                 images = model.video_processor.postprocess_video(tensor, output_type='pil')
+                if isinstance(images, list) and len(images) > 0 and isinstance(images[0], list):
+                    images = [frame for batch in images for frame in batch]
             elif hasattr(model, 'image_processor'):
                 if tensor.ndim == 5 and tensor.shape[1] == 3: # Qwen Image
                     tensor = tensor[:, :, 0]

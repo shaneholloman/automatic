@@ -52,7 +52,7 @@ def autocast_init(self, device_type=None, dtype=None, enabled=True, cache_enable
 
 original_grad_scaler_init = torch.amp.grad_scaler.GradScaler.__init__
 @wraps(torch.amp.grad_scaler.GradScaler.__init__)
-def GradScaler_init(self, device: str = None, init_scale: float = 2.0**16, growth_factor: float = 2.0, backoff_factor: float = 0.5, growth_interval: int = 2000, enabled: bool = True):
+def GradScaler_init(self, device: str | None = None, init_scale: float = 2.0**16, growth_factor: float = 2.0, backoff_factor: float = 0.5, growth_interval: int = 2000, enabled: bool = True):
     if device is None or check_cuda(device):
         return original_grad_scaler_init(self, device=return_xpu(device), init_scale=init_scale, growth_factor=growth_factor, backoff_factor=backoff_factor, growth_interval=growth_interval, enabled=enabled)
     else:
@@ -62,10 +62,11 @@ def GradScaler_init(self, device: str = None, init_scale: float = 2.0**16, growt
 original_is_autocast_enabled = torch.is_autocast_enabled
 @wraps(torch.is_autocast_enabled)
 def torch_is_autocast_enabled(device_type=None):
-    if device_type is None or check_cuda(device_type):
-        return original_is_autocast_enabled(return_xpu(device_type))
-    else:
-        return original_is_autocast_enabled(device_type)
+    dev = device_type
+    if dev is None or check_cuda(dev):
+        dev = return_xpu(dev)
+        dev = str(dev) if not isinstance(dev, str) else dev
+    return original_is_autocast_enabled(dev)
 
 
 original_get_autocast_dtype = torch.get_autocast_dtype

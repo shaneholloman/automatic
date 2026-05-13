@@ -386,6 +386,24 @@ class VDMScheduler(SchedulerMixin, ConfigMixin):
 
         return VDMSchedulerOutput(prev_sample=pred_prev_sample, pred_original_sample=pred_original_sample)
 
+    def scale_noise(
+        self,
+        sample: torch.Tensor,
+        timestep: Union[float, torch.Tensor],
+        noise: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        if noise is None:
+            noise = torch.randn_like(sample)
+        if not isinstance(timestep, torch.Tensor):
+            timestep = torch.tensor([timestep], device=sample.device, dtype=sample.dtype)
+        else:
+            timestep = timestep.to(device=sample.device)
+            if timestep.ndim == 0:
+                timestep = timestep.unsqueeze(0)
+        if timestep.shape[0] != sample.shape[0]:
+            timestep = timestep.repeat(sample.shape[0])
+        return self.add_noise(sample, noise, timestep)
+
     def add_noise(self, original_samples: torch.Tensor, noise: torch.Tensor, timesteps: torch.Tensor) -> torch.Tensor:
         """
         Adds noise to the original samples according to the noise schedule and the specified timesteps.

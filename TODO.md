@@ -4,13 +4,13 @@
 
 ### Assigned
 
-- Gallery: thumb-size, quick delete/download/info @vladmandic
 - Chat-based interface, @vladmandic
-- Multi-image inputs, @vladmandic
 - Control tab verify overrides handling, @vladmandic
 - Reimplement `llama` remover for Kanvas, @vladmandic
-- Integrate [Depth3D](https://github.com/vladmandic/sd-extension-depth3d), @vladmandic
+- Implement [pruna](https://github.com/PrunaAI/pruna), @vladmandic
+- Change params to default, @vladmandic
 
+- Detailer postprocessing, @CalamitousFelicitousness
 - Cloud providers, @CalamitousFelicitousness
 - Video processing add full API support, @CalamitousFelicitousness
 
@@ -20,7 +20,6 @@
   - `RIFE` in processing
   - `SeedVR2` in processing
 - Video model loader: Add video models to Reference
-- REMBG add <https://huggingface.co/briaai/RMBG-2.0>
 - UI Lite vs Expert mode
 - TensorRT acceleration
 - Auto handle scheduler `prediction_type`
@@ -56,21 +55,13 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
 ### Image
 
 - [JoyAI-Image-Edit](https://github.com/huggingface/diffusers/pull/13444) (pr in-progress)
-- [Lumina-DiMOO](https://github.com/huggingface/diffusers/pull/12468) (pr stalled)
-- [Step1X-Edit](https://github.com/huggingface/diffusers/pull/12249) (pr stalled)
-- [VIBE Image Edit](https://huggingface.co/iitolstykh/VIBE-Image-Edit) (diffusers-compatible)
 - [nVidia Cosmos-Predict-2.5](https://huggingface.co/nvidia/Cosmos-Predict2.5-2B) (in diffusers)
 - [nVidia Cosmos-Transfer-2.5](https://huggingface.co/nvidia/Cosmos-Transfer2.5-2B) (in diffusers)
-- [UltraFlux](https://huggingface.co/Owen777/UltraFlux-v1) (diffusers-compatible)
 - [Tencent HY-WU](https://huggingface.co/tencent/HY-WU) (transformers-compatible)
-- [Mugen](https://huggingface.co/CabalResearch/Mugen) (sdxl with flux vae experiment, not clean)
-- [Liquid](https://github.com/FoundationVision/Liquid) (autoregressive, not clean)
 
 ### Video
 
 - [HY-OmniWeaving](https://huggingface.co/tencent/HY-OmniWeaving)
-- [LTX-Condition](https://huggingface.co/Lightricks/LTX-2)
-- [LTX-Distilled](https://huggingface.co/Lightricks/LTX-2)
 - [OpenMOSS MOVA](https://huggingface.co/OpenMOSS-Team/MOVA-720p)
 - [Wan2.2-Animate](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B)
 - [Wan2.1-T2V-14B-CausVid](https://huggingface.co/lightx2v/Wan2.1-T2V-14B-CausVid)
@@ -84,12 +75,11 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
 - [Sana I2V](https://huggingface.co/Efficient-Large-Model/SANA-Video_2B_480p_diffusers)
 - [Wan-2.2 S2V](https://huggingface.co/Wan-AI/Wan2.2-S2V-14B)
 - [Meituan LongCat-Video](https://huggingface.co/meituan-longcat/LongCat-Video)
-- [LTXVideo LongMulti](https://huggingface.co/Lightricks/LTX-Video-0.9.8-13B-distilled)
 - [Phantom HuMo](https://github.com/Phantom-video/Phantom)
 - [CausVid-Plus](https://github.com/goatWu/CausVid-Plus/)
 - [LivePortrait](https://github.com/KwaiVGI/LivePortrait)
-- [Magi (SandAI)](https://github.com/SandAI-org/MAGI-1)
-- [Ming (inclusionAI)](https://github.com/inclusionAI/Ming)
+- [SandAI Magi](https://github.com/SandAI-org/MAGI-1)
+- [inclusionAI Ming](https://github.com/inclusionAI/Ming)
 - [HummingbirdXT](https://huggingface.co/amd/HummingbirdXT)
 - [DiffusionForcing](https://github.com/kwsong0113/diffusion-forcing-transformer)
 - [ByteDance Lynx](https://github.com/bytedance/lynx)
@@ -155,20 +145,30 @@ TODO: Investigate which models are diffusers-compatible and prioritize!
   - Background removal model trained on Bria FIBO dataset
   - Created: 2025-08 | Updated: 2025-09 | Stars: N/A (private model)
 
+### Rejected
+
+- [Mugen](https://huggingface.co/CabalResearch/Mugen) (sdxl with flux vae experiment, not clean)
+- [Liquid](https://github.com/FoundationVision/Liquid) (autoregressive, not clean)
+
 ## Code TODO
 
 > npm run todo
 
 ```code
-installer.py:642:15: W0511: TODO rocm: switch to pytorch source when it becomes available (fixme)
-modules/transformer_cache.py:29:61: W0511: TODO fc: autodetect tensor format based on model (fixme)
-modules/transformer_cache.py:30:50: W0511: TODO fc: autodetect distilled based on model (fixme)
-modules/processing_class.py:404:32: W0511: TODO processing: remove duplicate mask params (fixme)
-modules/sd_samplers_diffusers.py:355:31: W0511: TODO enso-required (fixme)
-modules/sd_models.py:1356:5: W0511: TODO model load: implement model in-memory caching (fixme)
-modules/ui_models_load.py:257:5: W0511: TODO loader: load receipe (fixme)
-modules/ui_models_load.py:264:5: W0511: TODO loader: save receipe (fixme)
-modules/sd_hijack_hypertile.py:123:17: W0511: TODO hypertile: vae breaks when using non-standard sizes (fixme)
-modules/sd_unet.py:77:39: W0511: TODO model load: force-reloading entire model as loading transformers only leads to massive memory usage (fixme)
-modules/modular_guiders.py:66:51: W0511: TODO: guiders (fixme)
+installer.py:TODO rocm: switch to pytorch source when it becomes available
+modules/control/run.py:TODO modernui: monkey-patch for missing tabs.select event
+modules/history.py:TODO: apply metadata, preview, load/save
+modules/image/resize.py:TODO resize image: enable full VAE mode for resize-latent
+modules/lora/lora_load.py:TODO lora: add t5 key support for sd35/f1
+modules/masking.py:TODO: additional masking algorithms
+modules/modular_guiders.py:TODO: guiders
+modules/processing_class.py:TODO processing: remove duplicate mask params
+modules/sd_hijack_hypertile.py:TODO hypertile: vae breaks when using non-standard sizes
+modules/sd_models.py:TODO model load: implement model in-memory caching
+modules/sd_samplers_diffusers.py:TODO enso-required
+modules/sd_unet.py:TODO model load: force-reloading entire model as loading transformers only leads to massive memory usage
+modules/transformer_cache.py:TODO fc: autodetect distilled based on model
+modules/transformer_cache.py:TODO fc: autodetect tensor format based on model
+modules/ui_models_load.py:TODO loader: load receipe
+modules/ui_models_load.py:TODO loader: save receipe
 ```

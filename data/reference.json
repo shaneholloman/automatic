@@ -143,6 +143,16 @@
     "date": "2025 January"
   },
 
+  "Owen777 UltraFlux-v1": {
+    "path": "Owen777/UltraFlux-v1",
+    "preview": "Owen777--UltraFlux-v1.jpg",
+    "desc": "UltraFlux-v1 is a FLUX.1-dev based text-to-image model optimized for native 4K and multi-aspect-ratio generation with improved composition consistency.",
+    "skip": true,
+    "extras": "sampler: Default, cfg_scale: 4.0, steps: 50",
+    "size": 33.0,
+    "date": "2025 November"
+  },
+
   "Z-Image": {
     "path": "Tongyi-MAI/Z-Image",
     "preview": "Tongyi-MAI--Z-Image.jpg",
@@ -622,6 +632,15 @@
     "size": 20.75,
     "date": "2025 January"
   },
+  "AlphaVLLM Lumina DiMOO": {
+    "path": "Alpha-VLLM/Lumina-DiMOO",
+    "desc": "Lumina-DiMOO is an omni diffusion large language model for multimodal generation and understanding with text-to-image, image editing, and multimodal understanding capabilities.",
+    "preview": "Alpha-VLLM--Lumina-DiMOO.jpg",
+    "skip": true,
+    "extras": "sampler: Default",
+    "size": 0,
+    "date": "2025 September"
+  },
 
   "HiDream-I1 Fast": {
     "path": "HiDream-ai/HiDream-I1-Fast",
@@ -649,6 +668,15 @@
     "extras": "sampler: Default",
     "size": 58.4,
     "date": "2025 April"
+  },
+  "HiDream-O1 Image": {
+    "path": "HiDream-ai/HiDream-O1-Image",
+    "desc": "HiDream-O1-Image is an 8B pixel-level unified transformer model for text-to-image generation, instruction editing, and multi-reference personalization up to 2048x2048.",
+    "preview": "HiDream-ai--HiDream-O1-Image.jpg",
+    "skip": true,
+    "extras": "sampler: Default",
+    "size": 35.2,
+    "date": "2026 May"
   },
   "HiDream-E1 Full": {
     "path": "HiDream-ai/HiDream-E1-Full",
@@ -924,6 +952,36 @@
     "extras": "sampler: Default, cfg_scale: 3.5",
     "size": 16.2,
     "date": "2025 December"
+  },
+
+  "StepFun Step1X-Edit v1.1": {
+    "path": "stepfun-ai/Step1X-Edit-v1p1-diffusers",
+    "preview": "stepfun-ai--Step1X-Edit-v1p1-diffusers.jpg",
+    "desc": "Multimodal image editing model using Step1X transformer architecture with Qwen2.5-VL text encoding, trained with Flow Matching scheduler for high-quality in-context image edits and refinements.",
+    "skip": true,
+    "extras": "sampler: Default",
+    "size": 24.85,
+    "date": "2025 September"
+  },
+
+  "VIBE Image Edit": {
+    "path": "vladmandic/VIBE-Image-Edit",
+    "preview": "vladmandic--VIBE-Image-Edit.jpg",
+    "desc": "VIBE is an open-source text-guided image editing model combining Sana1.5-1.6B diffusion backbone with Qwen3-VL multimodal conditioning for fast, instruction-based edits.",
+    "skip": true,
+    "extras": "sampler: Default, cfg_scale: 4.5, image_guidance_scale: 1.2, steps: 20",
+    "size": 9.27,
+    "date": "2025 December"
+  },
+
+  "JoyAI Image Edit": {
+    "path": "jdopensource/JoyAI-Image-Edit-Diffusers",
+    "preview": "jdopensource--JoyAI-Image-Edit-Diffusers.jpg",
+    "desc": "JoyAI Image Edit is a Diffusers-native image editing model that combines a JoyImageEdit transformer with Qwen3-VL multimodal conditioning for instruction-guided edits.",
+    "skip": true,
+    "size": 50.31,
+    "extras": "sampler: Default",
+    "date": "2026 April"
   }
 
 }

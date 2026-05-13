@@ -24,7 +24,7 @@ warn_once = False
 
 
 class CheckpointInfo:
-    def __init__(self, filename, name=None, sha=None, subfolder=None, model_type: str = 'checkpoint'):
+    def __init__(self, filename, name=None, sha=None, subfolder=None, model_type: str = 'checkpoint', folder: str|None = None):
         self.name = name
         self.hash = sha
         self.filename = filename
@@ -45,6 +45,8 @@ class CheckpointInfo:
             relname = rel(filename, shared.opts.ckpt_dir)
         elif relname.startswith(shared.opts.diffusers_dir):
             relname = rel(filename, shared.opts.diffusers_dir)
+        elif relname.startswith(shared.opts.hfcache_dir):
+            relname = rel(filename, shared.opts.hfcache_dir)
         elif relname.startswith(model_path):
             relname = rel(filename, model_path)
         elif relname.startswith(paths.script_path):
@@ -86,7 +88,7 @@ class CheckpointInfo:
 
         self.shorthash = self.sha256[0:10] if self.sha256 else None
         self.title = self.name if self.shorthash is None else f'{self.name} [{self.shorthash}]'
-        self.path = self.filename
+        self.path = folder or self.filename
         self.model_name = os.path.basename(self.name)
         self.metadata = read_metadata_from_safetensors(filename)
         # log.debug(f'Checkpoint: type={self.type} name={self.name} filename={self.filename} hash={self.shorthash} title={self.title}')
@@ -144,7 +146,7 @@ def list_models():
             checkpoint_info.register()
     diffusers_list = []
     for repo in modelloader.load_diffusers_models(clear=True):
-        checkpoint_info = CheckpointInfo(repo['name'], sha=repo['hash'])
+        checkpoint_info = CheckpointInfo(repo['name'], sha=repo['hash'], folder=repo['folder'])
         diffusers_list.append(checkpoint_info)
         if checkpoint_info.name is not None:
             checkpoint_info.register()

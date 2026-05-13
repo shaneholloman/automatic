@@ -226,7 +226,11 @@ class ERSDEScheduler(SchedulerMixin, ConfigMixin):
     def set_timesteps(self, num_inference_steps: Optional[int] = None, device: Union[str, torch.device] = None, timesteps: Optional[List[int]] = None, sigmas: Optional[List[float]] = None, mu: Optional[float] = None):
         if sigmas is not None:
             # Flow-matching path: sigmas provided externally
-            sigmas = np.array(sigmas, dtype=np.float64) if not isinstance(sigmas, np.ndarray) else sigmas.astype(np.float64)
+            if isinstance(sigmas, torch.Tensor):
+                sigmas = sigmas.detach().cpu().numpy()
+            elif not isinstance(sigmas, np.ndarray):
+                sigmas = np.asarray(sigmas, dtype=np.float64)
+            sigmas = sigmas.astype(np.float64, copy=False)
             self.num_inference_steps = len(sigmas)
             sigmas = torch.from_numpy(sigmas).to(dtype=torch.float64, device=device)
             self._setup_flow(sigmas, device, mu)

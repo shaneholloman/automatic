@@ -59,6 +59,23 @@ def diffusers_callback(pipe, step: int = 0, timestep: int = 0, kwargs: dict | No
         torch.xpu.synchronize(devices.device)
     elif devices.backend in {"cuda", "zluda", "rocm"}:
         torch.cuda.synchronize(devices.device)
+
+    if shared.state.paused:
+        log.debug('Sampling paused')
+        while shared.state.paused:
+            if shared.state.interrupted or shared.state.skipped:
+                raise AssertionError('Interrupted...')
+            time.sleep(0.1)
+
+    image = kwargs.get('image', None)
+    if image is not None:
+        shared.state.current_image = image
+        shared.state.current_latent = None
+        shared.state.step() # increase step
+        shared.state.preview_job = -1 # indicate that preview image has changed
+        debug_callback(f'Callback: step={step} timestep={timestep} image={image if image is not None else None} kwargs={list(kwargs)}')
+        return kwargs
+
     latents = kwargs.get('latents', None)
     if debug:
         debug_callback(f'Callback: step={step} timestep={timestep} latents={latents.shape if latents is not None else None} kwargs={list(kwargs)}')
@@ -67,12 +84,6 @@ def diffusers_callback(pipe, step: int = 0, timestep: int = 0, kwargs: dict | No
     shared.state.step()
     if shared.state.interrupted or shared.state.skipped:
         raise AssertionError('Interrupted...')
-    if shared.state.paused:
-        log.debug('Sampling paused')
-        while shared.state.paused:
-            if shared.state.interrupted or shared.state.skipped:
-                raise AssertionError('Interrupted...')
-            time.sleep(0.1)
     if latents is None:
         return kwargs
     elif shared.opts.nan_skip:
@@ -139,7 +150,9 @@ def diffusers_callback(pipe, step: int = 0, timestep: int = 0, kwargs: dict | No
                 width = getattr(p, 'width', 1024)
                 height = getattr(p, 'height', 1024)
             latents = kwargs['latents']
-            if len(latents.shape) == 3:  # packed format [B, seq_len, patch_channels]
+            if len(latents.shape) == 4:
+                latents = pipe._unpatchify_latents(latents) # [B, C*4, h/2, w/2] -> [B, C, h, w] # pylint: disable=protected-access
+            elif len(latents.shape) == 3:  # packed format [B, seq_len, patch_channels]
                 b, seq_len, patch_ch = latents.shape
                 channels = patch_ch // 4  # 4 = 2x2 patch
                 h_patches = height // vae_scale // 2

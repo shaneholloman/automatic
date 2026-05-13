@@ -184,8 +184,8 @@ class FlashFlowMatchEulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
 
     def set_timesteps(
             self,
-            num_inference_steps: int = None,
-            device: Union[str, torch.device] = None,
+            num_inference_steps: Optional[int] = None,
+            device: Optional[Union[str, torch.device]] = None,
             sigmas: Optional[List[float]] = None,
             mu: Optional[float] = None,
     ):
@@ -208,7 +208,11 @@ class FlashFlowMatchEulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
 
             sigmas = timesteps / self.config.num_train_timesteps
         else:
-            sigmas = np.array(sigmas).astype(np.float32)
+            if isinstance(sigmas, torch.Tensor):
+                sigmas = sigmas.detach().cpu().numpy()
+            else:
+                sigmas = np.asarray(sigmas, dtype=np.float32)
+            sigmas = sigmas.astype(np.float32, copy=False)
             num_inference_steps = len(sigmas)
         self.num_inference_steps = num_inference_steps
 
@@ -288,6 +292,7 @@ class FlashFlowMatchEulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
             s_tmin: float = 0.0,
             s_tmax: float = float("inf"),
             s_noise: float = 1.0,
+            noise_clip_std: float = 0.0,
             generator: Optional[torch.Generator] = None,
             return_dict: bool = True,
     ) -> Union[FlashFlowMatchEulerDiscreteSchedulerOutput, Tuple]:
@@ -352,7 +357,9 @@ class FlashFlowMatchEulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
                 device=model_output.device,
                 dtype=denoised.dtype,
             )
-            sample = sigma_next * noise + (1.0 - sigma_next) * denoised
+            if noise_clip_std > 0.0:
+                noise = noise.clamp(-noise_clip_std, noise_clip_std)
+            sample = sigma_next * s_noise * noise + (1.0 - sigma_next) * denoised
 
         self._step_index += 1
         sample = sample.to(model_output.dtype)

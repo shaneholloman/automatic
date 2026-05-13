@@ -41,12 +41,17 @@ const optionsChangedCallbacks = [];
 let uiCurrentTab = null;
 let uiAfterUpdateTimeout = null;
 
+function registerCallback(queue, callback) {
+  if (queue.includes(callback)) return;
+  queue.push(callback);
+}
+
 function onAfterUiUpdate(callback) {
   if (typeof callback !== 'function') {
     error(`onAfterUiUpdate was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiAfterUpdateCallbacks.push(callback);
+  registerCallback(uiAfterUpdateCallbacks, callback);
 }
 
 function onUiUpdate(callback) {
@@ -54,7 +59,7 @@ function onUiUpdate(callback) {
     error(`onUiUpdate was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiUpdateCallbacks.push(callback);
+  registerCallback(uiUpdateCallbacks, callback);
 }
 
 function onUiLoaded(callback) {
@@ -62,7 +67,7 @@ function onUiLoaded(callback) {
     error(`onUiLoaded was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiLoadedCallbacks.push(callback);
+  registerCallback(uiLoadedCallbacks, callback);
 }
 
 function onUiReady(callback) {
@@ -70,7 +75,7 @@ function onUiReady(callback) {
     error(`onUiReady was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiReadyCallbacks.push(callback);
+  registerCallback(uiReadyCallbacks, callback);
 }
 
 function onUiTabChange(callback) {
@@ -78,7 +83,7 @@ function onUiTabChange(callback) {
     error(`onUiTabChange was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  uiTabChangeCallbacks.push(callback);
+  registerCallback(uiTabChangeCallbacks, callback);
 }
 
 function onOptionsChanged(callback) {
@@ -86,7 +91,7 @@ function onOptionsChanged(callback) {
     error(`onOptionsChanged was called without a valid value. Expected a function but got: ${callback}`);
     return;
   }
-  optionsChangedCallbacks.push(callback);
+  registerCallback(optionsChangedCallbacks, callback);
 }
 
 function executeCallbacks(queue, arg) {
@@ -178,6 +183,88 @@ document.addEventListener('keydown', (e) => {
     else elem.focus();
   }
 });
+
+function getSortableCellValue(cell, sortType) {
+  const rawValue = cell?.dataset?.sortValue ?? cell?.textContent?.trim() ?? '';
+  if (sortType === 'number') {
+    const numericValue = Number.parseFloat(rawValue);
+    return Number.isNaN(numericValue) ? Number.NEGATIVE_INFINITY : numericValue;
+  }
+  return rawValue.toLowerCase();
+}
+
+function sortTable(table, columnIndex, sortType, sortOrder) {
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const direction = sortOrder === 'desc' ? -1 : 1;
+  const sortedRows = rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const aCell = a.row.children[columnIndex];
+      const bCell = b.row.children[columnIndex];
+      const aValue = getSortableCellValue(aCell, sortType);
+      const bValue = getSortableCellValue(bCell, sortType);
+      if (aValue < bValue) return -1 * direction;
+      if (aValue > bValue) return 1 * direction;
+      return a.index - b.index;
+    });
+  tbody.replaceChildren(...sortedRows.map((item) => item.row));
+}
+
+function applySortIndicators(table, activeHeader, sortOrder) {
+  const headers = table.querySelectorAll('th.sortable');
+  for (const header of headers) {
+    header.classList.remove('sorted-asc', 'sorted-desc');
+    header.removeAttribute('aria-sort');
+  }
+  activeHeader.classList.add(sortOrder === 'desc' ? 'sorted-desc' : 'sorted-asc');
+  activeHeader.setAttribute('aria-sort', sortOrder === 'desc' ? 'descending' : 'ascending');
+}
+
+function handleSortableTableClick(event) {
+  const header = event.target.closest('th.sortable');
+  if (!header) return;
+  const table = header.closest('table[data-sortable="true"]');
+  if (!table) return;
+  const headers = Array.from(table.querySelectorAll('th.sortable'));
+  const columnIndex = headers.indexOf(header);
+  if (columnIndex < 0) return;
+
+  const currentSortKey = table.dataset.sortKey || table.dataset.defaultSortKey;
+  const currentSortOrder = table.dataset.sortOrder || table.dataset.defaultSortOrder || 'asc';
+  const isCurrentHeader = currentSortKey === header.dataset.sortKey;
+  const nextOrder = isCurrentHeader && currentSortOrder === 'asc' ? 'desc' : 'asc';
+
+  table.dataset.sortKey = header.dataset.sortKey;
+  table.dataset.sortOrder = nextOrder;
+  sortTable(table, columnIndex, header.dataset.sortType || 'text', nextOrder);
+  applySortIndicators(table, header, nextOrder);
+}
+
+async function initTableSorter() {
+  const t0 = performance.now();
+  const root = gradioApp();
+  if (!root.dataset.tableSorterBound) {
+    root.addEventListener('click', handleSortableTableClick);
+    root.dataset.tableSorterBound = 'true';
+  }
+  const t1 = performance.now();
+  log('initTableSorter', Math.round(t1 - t0));
+  timer('initTableSorter', t1 - t0);
+}
+
+async function deleteFile(filename) {
+  if (!filename) return;
+  if (!confirm(`Are you sure you want to delete the object - This action cannot be undone? Object: ${filename}`)) return; // eslint-disable-line no-alert
+  const res = await authFetch(`${window.api}/delete-file?file=${encodeURIComponent(filename)}`);
+  if (!res || res.status !== 200) {
+    error('FileDelete', { file: filename, status: res?.status, statusText: res?.statusText });
+    return;
+  }
+  const data = await res.json();
+  log('FileDelete', data);
+}
 
 /**
  * checks that a UI element is not in another hidden element or tab content

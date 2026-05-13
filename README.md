@@ -57,7 +57,7 @@ SD.Next is feature-rich with a focus on performance, flexibility, and user exper
 
 SD.Next includes many features not found in other WebUIs, such as:
 - **SDNQ**: State-of-the-Art quantization engine
-  Use pre-quantized or run with quantizaion on-the-fly for up to 4x VRAM reduction with no or minimal quality and performance impact  
+  Use pre-quantized or run with quantization on-the-fly for up to 4x VRAM reduction with no or minimal quality and performance impact  
 - **Balanced Offload**: Dynamically balance CPU and GPU memory to run larger models on limited hardware
 - **Captioning** with 150+ **OpenCLiP** models, **Tagger** with **WaifuDiffusion** and **DeepDanbooru** models, and 25+ built-in **VLMs**  
 - **Image Processing** with full image correction color-grading suite of tools  

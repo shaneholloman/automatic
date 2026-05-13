@@ -1,7 +1,11 @@
 /* eslint-disable max-classes-per-file */
 let ws;
 let url;
+let currentSize = 0;
+let currentSort = 'none';
+let currentName = '';
 let currentImage = null;
+let currentTitle = '';
 let currentGalleryFolder = null;
 let pruneImagesTimer;
 let outstanding = 0;
@@ -18,7 +22,9 @@ const el = {
   search: undefined,
   status: undefined,
   btnSend: undefined,
+  overlay: undefined,
   clearCacheFolder: undefined,
+  size: undefined,
 };
 
 const SUPPORTED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'jp2', 'jxl', 'gif', 'mp4', 'mkv', 'avi', 'mjpeg', 'mpg', 'avr'];
@@ -26,12 +32,12 @@ const SUPPORTED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'jp2', 'jxl'
 const gallerySorter = {
   nameA: { name: 'Name Ascending', func: (a, b) => a.name.localeCompare(b.name) },
   nameD: { name: 'Name Descending', func: (b, a) => a.name.localeCompare(b.name) },
-  sizeA: { name: 'Size Ascending', func: (a, b) => a.size - b.size },
-  sizeD: { name: 'Size Descending', func: (b, a) => a.size - b.size },
-  resA: { name: 'Resolution Ascending', func: (a, b) => a.width * a.height - b.width * b.height },
-  resD: { name: 'Resolution Descending', func: (b, a) => a.width * a.height - b.width * b.height },
-  modA: { name: 'Modified Ascending', func: (a, b) => a.mtime - b.mtime },
-  modD: { name: 'Modified Descending', func: (b, a) => a.mtime - b.mtime },
+  sizeD: { name: 'Size Ascending', func: (a, b) => a.size - b.size },
+  sizeA: { name: 'Size Descending', func: (b, a) => a.size - b.size },
+  resD: { name: 'Resolution Ascending', func: (a, b) => a.width * a.height - b.width * b.height },
+  resA: { name: 'Resolution Descending', func: (b, a) => a.width * a.height - b.width * b.height },
+  modD: { name: 'Modified Ascending', func: (a, b) => a.mtime - b.mtime },
+  modA: { name: 'Modified Descending', func: (b, a) => a.mtime - b.mtime },
   none: { name: 'None', func: undefined },
 };
 
@@ -71,6 +77,8 @@ function resetGallerySelection() {
   updateGallerySelectionClasses(gallerySelection.files, -1);
   gallerySelection = { files: [], index: -1 };
   currentImage = null;
+  currentName = '';
+  currentTitle = '';
 }
 
 function applyGallerySelection(index, { send = true } = {}) {
@@ -84,6 +92,8 @@ function applyGallerySelection(index, { send = true } = {}) {
   }
   gallerySelection.index = index;
   currentImage = files[index].src;
+  currentName = files[index].name;
+  currentTitle = files[index].title;
   updateGallerySelectionClasses(files, index);
   if (send && el.btnSend) el.btnSend.click();
 }
@@ -129,7 +139,7 @@ async function awaitForGallery(expectedSize, signal) {
 
 function updateGalleryStyles() {
   if (opts.theme_type?.toLowerCase() === 'modern') {
-    folderStylesheet.replaceSync(`
+    folderStylesheet.replace(`
       .gallery-folder {
         cursor: pointer;
         padding: 8px 6px 8px 6px;
@@ -162,7 +172,7 @@ function updateGalleryStyles() {
       }
     `);
   } else {
-    folderStylesheet.replaceSync(`
+    folderStylesheet.replace(`
       .gallery-folder {
         cursor: pointer;
         padding: 8px 6px 8px 6px;
@@ -179,15 +189,29 @@ function updateGalleryStyles() {
       }
     `);
   }
-  fileStylesheet.replaceSync(`
+  const size = el.size ? el.size.value : opts.extra_networks_card_size;
+  fileStylesheet.replace(`
     .gallery-file {
       object-fit: contain;
       cursor: pointer;
-      height: ${opts.extra_networks_card_size}px;
-      width: ${opts.browser_fixed_width ? `${opts.extra_networks_card_size}px` : 'unset'};
+      height: ${size}px;
+      width: ${opts.browser_fixed_width ? `${size}px` : 'unset'};
     }
     .gallery-file:hover {
       filter: grayscale(100%);
+    }
+    .gallery-overlay {
+      position: absolute;
+      height: 24px;
+      background-color: rgba(0,0,0,0.7);
+      display: block;
+      text-align: right;
+      padding: 4px;
+      font-size: 1.2em;
+      letter-spacing: 0.5em;
+      width: 140px;
+      margin-top: calc(140px - 32px);
+      opacity: 75%;
     }
     :host(.gallery-file-selected) .gallery-file {
       box-shadow: 0 0 0 2px var(--sd-button-selected-color);
@@ -409,9 +433,7 @@ class GalleryFolder extends HTMLElement {
     this.div.classList.add('gallery-folder-selected');
     GalleryFolder.#active = this;
     for (const folder of GalleryFolder.folders) {
-      if (folder !== this) {
-        folder.div.classList.remove('gallery-folder-selected');
-      }
+      if (folder !== this) folder.div.classList.remove('gallery-folder-selected');
     }
   }
 }
@@ -456,7 +478,6 @@ class GalleryFile extends HTMLElement {
     this.height = 0;
     this.shadow = this.attachShadow({ mode: 'open' });
     this.shadow.adoptedStyleSheets = [fileStylesheet];
-
     this.firstRun = true;
   }
 
@@ -469,9 +490,7 @@ class GalleryFile extends HTMLElement {
     if (dir && dir[1]) {
       const dirPath = dir[1];
       const isOpen = separatorStates.get(dirPath);
-      if (isOpen === false) {
-        this.style.display = 'none';
-      }
+      if (isOpen === false) this.style.display = 'none';
     }
 
     this.hash = await getHash(`${this.src}/${this.size}/${this.mtime}`)
@@ -514,7 +533,7 @@ class GalleryFile extends HTMLElement {
           this.size = json.size;
           this.mtime = new Date(json.mtime);
           if (opts.browser_cache && this.hash) {
-            await idbAdd({
+            idbAdd({
               hash: this.hash,
               folder: this.fullFolder,
               file: this.name,
@@ -534,15 +553,22 @@ class GalleryFile extends HTMLElement {
         img.src = `file=${this.src}`;
       }
     }
-    if (this.#signal.aborted) { // Do not change the operations order from here...
-      return;
-    }
+    if (this.#signal.aborted) return;
     galleryHashes.add(this.hash);
-    if (!ok) {
-      return;
-    } // ... to here unless modifications are also being made to maintenance functionality and the usage of AbortController/AbortSignal
+    if (!ok) return;
+
     img.onclick = () => {
       setGallerySelectionByElement(this, { send: true });
+    };
+    img.onpointerenter = () => {
+      el.overlay.display = 'block';
+      this.shadow.appendChild(el.overlay);
+      currentImage = this.src;
+      currentName = this.name;
+      currentTitle = this.title;
+    };
+    img.onpointerleave = () => {
+      el.overlay.display = 'none';
     };
     img.title = `Folder: ${this.folder}\nFile: ${this.name}\nSize: ${this.size.toLocaleString()} bytes\nModified: ${this.mtime.toLocaleString()}`;
     this.title = img.title;
@@ -550,7 +576,7 @@ class GalleryFile extends HTMLElement {
     // Final visibility check based on search term.
     const shouldDisplayBasedOnSearch = this.title.toLowerCase().includes(el.search.value.toLowerCase());
     if (this.style.display !== 'none') { // Only proceed if not already hidden by a closed separator
-      this.style.display = shouldDisplayBasedOnSearch ? 'unset' : 'none';
+      this.style.display = shouldDisplayBasedOnSearch ? 'flex' : 'none';
     }
 
     this.shadow.appendChild(img);
@@ -558,8 +584,10 @@ class GalleryFile extends HTMLElement {
 }
 
 async function createThumb(img) {
-  const height = opts.extra_networks_card_size;
-  const width = opts.browser_fixed_width ? opts.extra_networks_card_size : 0;
+  const sizeEl = document.getElementById('gallery-thumb-size');
+  currentSize = sizeEl ? parseInt(sizeEl.value, 10) : opts.extra_networks_card_size;
+  const height = currentSize;
+  const width = opts.browser_fixed_width ? currentSize : 0;
   const canvas = document.createElement('canvas');
   const scaleY = height / img.height;
   const scaleX = width > 0 ? width / img.width : scaleY;
@@ -872,8 +900,13 @@ const findDuplicates = (arr, key) => {
 };
 
 async function gallerySort(key) {
-  if (!Object.hasOwn(gallerySorter, key)) {
-    error(`Gallery: "${key}" is not a valid gallery sorting key`);
+  // if currentSort does not start with key, default to key+A
+  // else if currentSort ends with A change to D and vice versa for toggling sort order
+  if (currentSort.startsWith(key)) currentSort = currentSort.endsWith('A') ? `${key}D` : `${key}A`;
+  else currentSort = `${key}A`;
+
+  if (!Object.hasOwn(gallerySorter, currentSort)) {
+    error(`Gallery: "${currentSort}" is not a valid gallery sorting key`);
     return;
   }
   const t0 = performance.now();
@@ -901,7 +934,7 @@ async function gallerySort(key) {
     folderGroups.get(dir).push(file);
   }
 
-  sortMode = gallerySorter[key];
+  sortMode = gallerySorter[currentSort];
 
   // Sort root files
   rootFiles.sort(sortMode.func);
@@ -993,24 +1026,24 @@ async function thumbCacheCleanup(folder, imgCount, controller, force = false) {
     if (typeof folder !== 'string' || typeof imgCount !== 'number') {
       throw new Error('Function called with invalid arguments');
     }
-    debug('Thumbnail DB cleanup: Waiting for gallery data to settle');
+    debug('thumbCacheCleanup: wait');
     await awaitForGallery(imgCount, controller.signal);
   } catch (err) {
-    debug(`Thumbnail DB cleanup: Skipping cleanup for "${folder}" due to "${err}"`);
+    error('thumbCacheCleanup', { folder, error: err });
     return;
   }
 
   maintenanceQueue.enqueue({
     signal: controller.signal,
     callback: async () => {
-      log(`Thumbnail DB cleanup: Checking if "${folder}" needs cleaning`);
+      log('maintenanceQueue', { folder });
       const t0 = performance.now();
       const keptGalleryHashes = force ? new Set() : new Set(galleryHashes.values()); // External context should be safe since this function run is guarded by AbortController/AbortSignal in the SimpleFunctionQueue
       const folderNormalized = folder.replace(/\/+/g, '/').replace(/\/$/, '');
       const recursiveFolder = IDBKeyRange.bound(folderNormalized, `${folderNormalized}\uffff`, false, true);
       const cachedHashesCount = await idbCount(recursiveFolder)
         .catch((e) => {
-          error(`Thumbnail DB cleanup: Error when getting entry count for "${folder}".`, e);
+          error('maintenanceQueue', { folder, error: e });
           return Infinity; // Forces next check to fail if something went wrong
         });
       const cleanupCount = cachedHashesCount - keptGalleryHashes.size;
@@ -1020,21 +1053,21 @@ async function thumbCacheCleanup(folder, imgCount, controller, force = false) {
       }
 
       if (controller.signal.aborted) {
-        debug(`Thumbnail DB cleanup: Cancelling "${folder}" cleanup due to "${controller.signal.reason}"`);
+        debug('maintenanceQueue', { folder, reason: controller.signal.reason });
         return;
       }
       const cb_clearMsg = showCleaningMsg(cleanupCount);
       await idbFolderCleanup(keptGalleryHashes, recursiveFolder, controller.signal)
         .then((delcount) => {
           const t1 = performance.now();
-          log(`Thumbnail DB cleanup: folder=${folder} kept=${keptGalleryHashes.size} deleted=${delcount} time=${Math.round(t1 - t0)}ms`);
+          log('maintenanceQueue', { folder, kept: keptGalleryHashes.size, deleted: delcount, time: Math.round(t1 - t0) });
           timer(`thumbnailDBCleanup:${folder}`, t1 - t0);
           currentGalleryFolder = null;
           el.clearCacheFolder.innerText = '<select a folder first>';
           updateStatusWithSort('Thumbnail cache cleared');
         })
         .catch((reason) => {
-          SimpleFunctionQueue.abortLogger('Thumbnail DB cleanup:', reason);
+          SimpleFunctionQueue.abortLogger('thumbCacheCleanup', reason);
         })
         .finally(async () => {
           await new Promise((resolve) => { setTimeout(resolve, 1000); }); // Delay removal by 1 second to ensure at least minimum visibility
@@ -1057,7 +1090,7 @@ function resetGalleryState(reason) {
 
 function clearCacheIfDisabled(browser_cache) {
   if (browser_cache === false) {
-    log('Thumbnail DB cleanup:', 'Image gallery cache setting disabled. Clearing cache.');
+    log('thumbCacheCleanup', { disabled: true });
     const controller = resetGalleryState('Clearing all thumbnails from cache');
     maintenanceQueue.enqueue({
       signal: controller.signal,
@@ -1066,13 +1099,13 @@ function clearCacheIfDisabled(browser_cache) {
         const cb_clearMsg = showCleaningMsg(0, true);
         await idbClearAll(controller.signal)
           .then(() => {
-            log(`Thumbnail DB cleanup: Cache cleared. time=${Math.floor(performance.now() - t0)}ms`);
+            log('thumbCacheCleanup', { time: Math.floor(performance.now() - t0) });
             currentGalleryFolder = null;
             el.clearCacheFolder.innerText = '<select a folder first>';
             updateStatusWithSort('Thumbnail cache cleared');
           })
           .catch((e) => {
-            SimpleFunctionQueue.abortLogger('Thumbnail DB cleanup:', e);
+            SimpleFunctionQueue.abortLogger('thumbCacheCleanup', e);
           })
           .finally(async () => {
             await new Promise((resolve) => { setTimeout(resolve, 1000); });
@@ -1307,6 +1340,80 @@ async function initGalleryAutoRefresh() {
   galleryVisObserver.observe(galleryTab, { attributeFilter: ['class', 'style'], attributeOldValue: true });
 }
 
+async function overlayDelete(evt) {
+  const res = await authFetch(`${window.api}/delete-image?file=${encodeURIComponent(currentImage)}`);
+  evt.stopPropagation();
+  if (!res || res.status !== 200) {
+    error('galleryDelete', { file: currentImage, status: res?.status, statusText: res?.statusText });
+    return;
+  }
+  const data = await res.json();
+  log('galleryDelete', data);
+  GalleryFolder.getActive()?.click();
+}
+
+async function overlayDownload(evt) {
+  log('galleryDownload', currentImage);
+  const link = document.createElement('a');
+  link.href = `/file=${encodeURIComponent(currentImage)}`;
+  link.download = currentName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  evt.stopPropagation();
+}
+
+async function overlayInfo(evt) {
+  evt.stopPropagation();
+  const tgt = document.getElementById('html_info_formatted_gallery');
+  if (!tgt) return;
+  const res = await authFetch(`${window.api}/png-info?file=${encodeURI(currentImage)}`);
+  if (!res || res.status !== 200) return;
+  const data = await res.json();
+  log('galleryInfo res', data);
+  const prompt = data?.parameters?.Prompt || '';
+  const negative = data?.parameters?.Negative || data?.parameters?.['Negative prompt'] || '';
+  const raw = data?.info || '';
+  const params = data?.parameters || {};
+  delete params.Prompt;
+  delete params.Negative;
+  delete params['Negative prompt'];
+  const paramsFormatted = Object.entries(params).map(([key, value]) => `<b>${key}:</b> ${value}`).join(' | ');
+  tgt.innerHTML = `
+    <div><b>File:</b> ${currentImage}</div>
+    <div><b>Prompt:</b> ${prompt}</div>
+    <div><b>Negative:</b> ${negative}</div>
+    <div>${paramsFormatted}</div>
+    <div><b>Raw:</b><pre style="white-space: pre-wrap; margin: 0.5em">${raw}</pre></div>
+  `;
+  const img = document.querySelector('#gallery_gallery img');
+  if (img) img.src = `/file=${encodeURIComponent(currentImage)}?t=${Date.now()}`; // Force refresh in case info endpoint is faster than cache update
+  const status = document.querySelector('#html_log_gallery p');
+  if (status) status.innerText = currentTitle;
+}
+
+async function createOverlay() {
+  if (el.overlay) return;
+  el.overlay = document.createElement('div');
+  el.overlay.className = 'gallery-overlay';
+  const btnDownload = document.createElement('span');
+  btnDownload.innerHTML = '\udb85\udc64';
+  btnDownload.title = 'Download image';
+  btnDownload.style.cursor = 'pointer';
+  btnDownload.addEventListener('click', overlayDownload);
+  const btnDelete = document.createElement('span');
+  btnDelete.innerHTML = '\uf05c';
+  btnDelete.title = 'Delete image';
+  btnDelete.style.cursor = 'pointer';
+  btnDelete.addEventListener('click', overlayDelete);
+  const btnInfo = document.createElement('span');
+  btnInfo.innerHTML = '\uf05a';
+  btnInfo.title = 'Image metadata';
+  btnInfo.style.cursor = 'pointer';
+  btnInfo.addEventListener('click', overlayInfo);
+  el.overlay.append(btnInfo, btnDelete, btnDownload);
+}
+
 async function blockQueueUntilReady() {
   // Add block to maintenanceQueue until cache is ready
   maintenanceQueue.enqueue({
@@ -1329,22 +1436,27 @@ async function initGallery() { // triggered on gradio change to monitor when ui 
   el.files = gradioApp().getElementById('tab-gallery-files');
   el.status = gradioApp().getElementById('tab-gallery-status');
   el.search = gradioApp().querySelector('#tab-gallery-search textarea');
+  el.size = document.getElementById('tab-gallery-thumb-size');
   if (!el.folders || !el.files || !el.status || !el.search) {
     error('initGallery', 'Missing gallery elements');
     return;
   }
 
+  if (el.size) {
+    el.size.value = opts.extra_networks_card_size;
+    el.size.addEventListener('input', updateGalleryStyles);
+  }
   blockQueueUntilReady(); // Run first
+  createOverlay();
   updateGalleryStyles();
   injectGalleryStatusCSS();
   setOverlayAnimation();
   galleryClearInit();
+
   const progress = gradioApp().getElementById('tab-gallery-progress');
-  if (progress) {
-    galleryProgressBar.attachTo(progress);
-  } else {
-    log('initGallery', 'Failed to attach loading progress bar');
-  }
+  if (progress) galleryProgressBar.attachTo(progress);
+  else log('initGallery', 'Failed to attach loading progress bar');
+
   el.search.addEventListener('input', gallerySearch);
   el.btnSend = gradioApp().getElementById('tab-gallery-send-image');
   document.getElementById('tab-gallery-files').style.height = opts.logmonitor_show ? '75vh' : '85vh';

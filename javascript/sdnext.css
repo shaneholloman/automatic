@@ -2193,6 +2193,30 @@ div:has(>#tab-gallery-folders) {
   background-color: var(--button-primary-border-color) !important;
 }
 
+.simple-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding-right: 1.2em;
+}
+
+.simple-table th.sortable::after {
+  content: '↕';
+  position: absolute;
+  right: 0.3em;
+  opacity: 0.55;
+}
+
+.simple-table th.sortable.sorted-asc::after {
+  content: '↑';
+  opacity: 1;
+}
+
+.simple-table th.sortable.sorted-desc::after {
+  content: '↓';
+  opacity: 1;
+}
+
 .simple-table tr:nth-child(odd) {
   background-color: var(--neutral-900);
 }

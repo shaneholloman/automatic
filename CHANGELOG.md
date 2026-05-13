@@ -1,5 +1,122 @@
 # Change Log for SD.Next
 
+## Update for 2026-05-13
+
+### Highlights for 2026-05-13
+
+Just two weeks since last release, but we have a lot of new models and features to cover!
+
+*What's New?*
+- Image editing models now can work with multiple image inputs!
+- Six new models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
+- Enhanced capabilities for *Anima*, *Ernie-Image*, *LTX*, *Flux.2* and *Chroma* models
+- Enhanced *LoRA* capabilities in many models
+- UI improvements across the board: *Main panels*, *Gallery*, *Kanvas*, *Networks*, and more...
+
+For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md)  
+
+[ReadMe](https://github.com/vladmandic/automatic/blob/master/README.md) | [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md) | [Docs](https://vladmandic.github.io/sdnext-docs/) | [WiKi](https://github.com/vladmandic/automatic/wiki) | [Discord](https://discord.com/invite/sd-next-federal-batch-inspectors-1101998836328697867) | [Sponsor](https://github.com/sponsors/vladmandic)  
+
+### Details for 2026-05-13
+
+- **Models**
+  - [HiDream-O1-Image](https://huggingface.co/HiDream-ai/HiDream-O1-Image) pixel-level unified transformer model support  
+    HiDream-O1 is based on a single custom *Qwen3-VL* 8.8B 35GB component  
+    includes both **HiDream-O1-Image** *(base)* and **HiDream-O1-Image-Dev** *(distilled*)* variants  
+    includes *sdnq-svd-dynamic-int8* pre-quantized variants for both base and dev models
+    includes *T2I* and *I2I edit* capabilities and resolutions up to 2048px   
+    *note*: use steps:50 for base and steps:28 for dev variants  
+  - [JoyAI Image Edit](https://huggingface.co/jdopensource/JoyAI-Image-Edit-Diffusers) image-editing model support  
+    includes multimodal conditioning using *Qwen3-VL* with a dedicated *JoyImageEdit* diffusion transformer  
+    *note* this is a large model at 50GB so use of aggressive quantization is recommended  
+  - [StepFun Step1X-Edit v1.1](https://huggingface.co/stepfun-ai/Step1X-Edit-v1p1-diffusers) image-editing model support  
+    step1x is a large dedicated image edit model combining qwen-2.5 8B encoder with custom 12.4B transformer  
+  - [VIBE Image Edit](https://huggingface.co/iitolstykh/VIBE-Image-Edit) image-editing model support  
+    built on Sana1.5-1.6B diffusion backbone with Qwen3-VL-2B multimodal conditioning  
+    primarily image-editing model, but supports t2i as well, uses multi-scale resolution binning up to 2048px  
+  - [AlphaVLLM Lumina-DiMOO](https://huggingface.co/Alpha-VLLM/Lumina-DiMOO) unified multimodal diffusion model  
+    includes *T2I*, *I2I edit*, and *MMU* capabilities in a single pipeline  
+    *note* model also supports special prompts: *dense, canny_pred, control, subject, edit, ref_transfer, multi_view*  
+    *note* as with most multimodal/unified models, it needs higher step count (recommended is 64 steps) and uses quite a lot of VRAM, so use with caution!  
+  - [Owen777 UltraFlux-v1](https://huggingface.co/Owen777/UltraFlux-v1) native 4K text-to-image model based on *FLUX.1-dev*  
+    *note*: UltraFlux is capable of rendering images up to 4K resolution, but it doesnt mean it will do that on any hardware - it will depend on your VRAM!  
+  - [Anima Preview-v3](https://huggingface.co/circlestone-labs/Anima)  
+    add *turbo* variant with [turbo-LoRA](https://civitai.com/models/2560840/anima-turbo-lora) pre-merged  
+    add *sdnq-svd-dynamic-int8* pre-quantized variant  
+- **Features**
+  - **Multi-image** workflows!  
+    for models that support multiple images as inputs, you can now add multiple stages in Kanvas  
+    prompts like "*place character from first image, add background from second image, render in style from third image*" are now possible  
+  - option *inputs -> skip processing* to force images to passed to model as-is without any pre-processing  
+    examples of models that support multi-inputs: *qwen-image-edit, flux.2, google-gemini*  
+  - [SD Ultimate Upscale](https://github.com/Coyote-A/ultimate-upscale-for-automatic1111)  
+    still a popular method for upscaling, but has not been updated nor maintained for a while  
+    so now its modernized and fully integrated as a built-in script!  
+  - **LTX** support for *audio* generation
+  - **Anima** support for *img2img* and *inpaint* workflows
+  - **Ernie-Image** add native *LoRA* support, *img2img* and *inpaint* workflows
+  - **Chroma** add native *LoRA* support
+  - **Flux.2** add native *LoRA* support
+  - **Prompt enhance** add info to image metadata  
+  - custom **VAE** loader for all pipelines  
+    *note*: vae still needs to be compatible with the model  
+  - **CivitAI** downloaded thumbnails now include metadata  
+  - **Installer** support for `git+http` style references
+- **UI**
+  - **Networks** using networks to load model or auto-download a reference model will now be reflected in the UI  
+  - ability to manually reorient *input/output* panels
+  - all ui panels can be *minimized/maximized* by clicking on their header  
+    state is preserved across sessions and can be used to hide rarely used panels and declutter the workspace  
+  - **Kanvas** re-order stages by clicking on active stage  
+    order of stages determines order of images passed to model  
+  - **Kanvas** *magic-wand* tool now works on mask layer and auto-creates mask based on perceptual tolerance  
+  - **Gallery** add thumbnail size slider
+  - **Gallery** add quick info/download/delete buttons on thumbnail hover
+  - **Models** sortable columns, ability to remove a model  
+    applies to models as well as huggingface cache entries  
+  - **Server Info** add button *copy-to-clipboard*  
+    useful for sharing your system info when asking for help in discord or github  
+- **Control**
+  - remove buttons: *input/control/process*
+  - move params *control input type* to control menu section
+  - remove "processed preview" from ui  
+    preprocessor output can still be generated by clicking preview button in in control unit and it will render into normal output area  
+- **Internal**
+  - `offload` auto-reapply hook on error  
+  - refactor `pip` installer, thanks @awsr
+  - remove obsolete `lora` stepwise and functional code, thanks @awsr
+  - interrupt model loading between components
+  - patch `rich` for cleaner exception logging
+  - lint `ruff` strict and reduce exceptions
+  - lint `pylint` improvements
+  - lint `ty` readiness
+- **Fixes**
+  - add missing `jquery` and `sparkline` js scripts
+  - save handle already decoded images
+  - `ernie-image` preview
+  - `lora` false deactivate
+  - `kandinsky-5` t2i/i2i workflows
+  - progress do not timeout when paused
+  - faster server shutdown/restart, thanks @awsr
+  - `openvino` force offload none
+  - `lut` file handling
+  - warn on pipeline ignoring `cfg`
+  - detailer `segmentation`, thanks @awsr
+  - `ipex` invalid device type
+  - cache network thumbnails
+  - `scripts` corrupting control ui state
+  - avoid `callback` duplicate registrations
+  - pipeline task change causing loss of info on loaded `lora`
+  - `detailer` handle `lora` internally
+  - vae preview flashes previous image
+  - `torch.compile` improvements
+  - `gradio` preprocess exception handling
+  - `ipadapters` with offloading
+  - `kanvas` outpaint
+  - `network` preview handle invalid image
+  - `schedulers` improve *set_timesteps* handling
+  - `schedulers` improve *scale_noise* handling
+
 ## Update for 2026-04-28
 
 ### Highlights for 2026-04-28

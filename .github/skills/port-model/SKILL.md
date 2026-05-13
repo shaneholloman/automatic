@@ -63,6 +63,11 @@ Before implementing model-reference updates, explicitly ask the user which categ
 
 Do not guess this category. Use the user answer to decide which reference JSON file(s) to update.
 
+## Mandatory Pipeline Question
+
+Before implementing a pipeline, explicitly ask the user if the model already has an upstream Diffusers pipeline that can be reused.
+If not, ask for URL or path to a reference implementation that can be structurally copied.
+
 ## Repo Files To Check
 
 Start by reading the task description, then inspect the closest matching implementations.
@@ -129,6 +134,9 @@ Pipeline module responsibilities:
 - `__call__`
 - Output dataclass
 - Optional callback handling and output conversion
+
+If custom pipeline is provided by user, check it for accuracy and completness but do not assume it is perfect. Make necessary adjustments to fit SD.Next patterns and validate the result.
+Fix all relative imports to be absolute and compatible with SD.Next repo structure, make sure that all imports are resolvable and make sure it passes `ruff` checks.
 
 ### 3. Raw Checkpoint Or Single-File Weights
 

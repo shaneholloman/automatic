@@ -128,15 +128,18 @@ def task_specific_kwargs(p, model):
             'width': width,
         }
 
+    fake_i2i = ['QwenImageEditPipeline', 'QwenImageEditPlusPipeline', 'WanImageToVideoPipeline', 'ChronoEditPipeline']
+    can_i2i = ['QwenImageEditPipeline', 'QwenImageEditPlusPipeline', 'QwenImageLayeredPipeline', 'Kandinsky5I2IPipeline', 'QwenImageLayeredPipeline', 'WanImageToVideoPipeline','ChronoEditPipeline', 'GoogleNanoBananaPipeline', 'GlmImagePipeline', 'Step1XEditPipeline']
+
     # model specific args
-    if ('QwenImageEdit' in model_cls) and (p.init_images is None or len(p.init_images) == 0):
-        task_args['image'] = [Image.new('RGB', (p.width, p.height), (0, 0, 0))] # monkey-patch so qwen-image-edit pipeline does not error-out on t2i
-    if ('QwenImageEditPlusPipeline' in model_cls) and (p.init_control is not None) and (len(p.init_control) > 0):
-        task_args['image'] += p.init_control
-    if ('QwenImageLayeredPipeline' in model_cls) and (p.init_images is not None) and (len(p.init_images) > 0):
-        task_args['image'] = p.init_images[0].convert('RGBA')
-    if ('Flux2' in model_cls) and (p.init_control is not None) and (len(p.init_control) > 0):
-        task_args['image'] += p.init_control
+    if (model_cls in fake_i2i) and (len(getattr(p, 'init_images', [])) == 0):
+        log.debug(f'Model init: cls={model_cls} image=blank')
+        p.init_images = [Image.new('RGB', (p.width, p.height), (0, 0, 0))] # monkey-patch so i2i pipeline does not error-out on t2i
+    if (model_cls in can_i2i) and (len(getattr(p, 'init_images', [])) > 0):
+        task_args['image'] = p.init_images
+
+    if ('QwenImageLayeredPipeline' in model_cls) and (task_args.get('image', None) is not None):
+        task_args['image'] = [i.convert('RGBA') for i in task_args['image']]
     if ('LatentConsistencyModelPipeline' in model_cls) and (len(p.init_images) > 0):
         p.ops.append('lcm')
         init_latents = [processing_vae.vae_encode(image, model=shared.sd_model, vae_type=p.vae_type).squeeze(dim=0) for image in p.init_images]
@@ -148,17 +151,8 @@ def task_specific_kwargs(p, model):
             'width': p.width,
             'height': p.height,
         }
-    if ('WanImageToVideoPipeline' in model_cls) or ('ChronoEditPipeline' in model_cls):
-        if (p.init_images is not None) and (len(p.init_images) > 0):
-            task_args['image'] = p.init_images[0]
-        else:
-            task_args['image'] = Image.new('RGB', (p.width, p.height), (0, 0, 0)) # monkey-patch so wan-i2i pipeline does not error-out on t2i
     if ('WanVACEPipeline' in model_cls) and (p.init_images is not None) and (len(p.init_images) > 0):
         task_args['reference_images'] = p.init_images
-    if ('GoogleNanoBananaPipeline' in model_cls) and (p.init_images is not None) and (len(p.init_images) > 0):
-        task_args['image'] = p.init_images[0]
-    if ('GlmImagePipeline' in model_cls) and (p.init_images is not None) and (len(p.init_images) > 0):
-        task_args['image'] = p.init_images
     if 'BlipDiffusionPipeline' in model_cls:
         if len(p.init_images) == 0:
             log.error('BLiP diffusion requires init image')
@@ -259,6 +253,9 @@ def set_pipeline_args(p, model, prompts:list, negative_prompts:list, prompts_2:l
         args['guidance_scale'] = p.cfg_scale
     if 'img_guidance_scale' in possible and hasattr(p, 'image_cfg_scale') and p.image_cfg_scale is not None and p.image_cfg_scale > 0:
         args['img_guidance_scale'] = p.image_cfg_scale
+    if getattr(getattr(model, 'config', None), 'is_distilled', False) and args.get('guidance_scale', 0) > 1 and not getattr(p, 'distilled_warned', False):
+        log.warning(f'Pipeline: cls={model.__class__.__name__} distilled=True cfg_scale={args["guidance_scale"]} ignored, forced to 1')
+        p.distilled_warned = True
     if 'generator' in possible:
         generator = get_generator(p)
         args['generator'] = generator
@@ -272,7 +269,7 @@ def set_pipeline_args(p, model, prompts:list, negative_prompts:list, prompts_2:l
             kwargs['output_type'] = 'np' # only set latent if model has vae
 
     # model specific
-    if 'Kandinsky' in model.__class__.__name__ or 'Cosmos2' in model.__class__.__name__ or 'Anima' in model.__class__.__name__ or 'OmniGen2' in model.__class__.__name__:
+    if 'Kandinsky' in model.__class__.__name__ or 'Cosmos2' in model.__class__.__name__ or 'OmniGen2' in model.__class__.__name__:
         kwargs['output_type'] = 'np' # only set latent if model has vae
     if 'StableCascade' in model.__class__.__name__:
         kwargs.pop("guidance_scale") # remove

@@ -234,7 +234,7 @@ class FlowMatchDPMSolverMultistepScheduler(SchedulerMixin, ConfigMixin):
         return math.exp(mu) / (math.exp(mu) + (1 / t - 1) ** sigma)
 
     def set_timesteps(self,
-        num_inference_steps: int = None,
+        num_inference_steps: int | None = None,
         device: Union[str, torch.device] = None,
         sigmas: Optional[List[float]] = None,
         mu: Optional[float] = None,
@@ -295,6 +295,10 @@ class FlowMatchDPMSolverMultistepScheduler(SchedulerMixin, ConfigMixin):
         else:
             num_inference_steps = len(sigmas)
             self.num_inference_steps = num_inference_steps
+            if isinstance(sigmas, torch.Tensor):
+                sigmas = sigmas.detach().cpu().numpy()
+            else:
+                sigmas = np.asarray(sigmas, dtype=np.float64)
 
         if self.config.sigma_schedule == "exponential":
             if self.use_beta_sigmas:

@@ -1,10 +1,31 @@
 # SD.Next: AGENTS.md Project Guidelines
 
-SD.Next is a complex codebase with specific patterns and conventions.
+**SD.Next** is a complex codebase with specific patterns and conventions.
 General app structure is:
-- Python backend server  
-  Uses Torch for model inference, FastAPI for API routes and Gradio for creation of UI components.  
-- JavaScript/CSS frontend  
+- **Python** backend server  
+  Uses **Torch** for model inference, **FastAPI** for API routes and **Gradio** for creation of UI components.  
+- **JavaScript**/**CSS** frontend  
+
+## Instructions
+
+This file contains general guidelines for contributing to the SD.Next codebase, including conventions, tools, and project structure. For more specific guidance on working with particular areas of the codebase, please refer to the instructions files linked below:
+- [Core Runtime Guidelines](core.instructions.md): Use when editing Python core runtime code, startup flow, model loading, API internals, backend/device logic, or shared state in modules and pipelines.
+- [UI And Frontend Guidelines](ui.instructions.md): Use when editing frontend UI code, JavaScript, HTML, CSS, localization files, or built-in UI extensions including modernui and kanvas.
+- [Hint Typography Guidelines](hints.instructions.md): Use when editing hint text or other UI strings in localization JSON files (`html/locale_*.json`, `html/override_*.json`).
+
+## Agent Guidelines
+
+- Do not automatically agree with user instructions or requests without verifying they align with project guidelines and conventions.
+- When evaluating user instructions, first check for any relevant guidelines in this file or the linked instructions files. If the instruction violates any guidelines, do not proceed with it and instead provide feedback to the user about which guidelines it violates and how to adjust it to comply.
+- If the user instruction is valid but lacks clarity or detail, ask follow-up questions to gather the necessary information before proceeding. Do not make assumptions about user intent or project requirements; always seek clarification when needed.
+- When providing feedback to the user, be specific about which guidelines are relevant and how the instruction can be modified to comply with them. If there are multiple guidelines that apply, list them all and explain how they relate to the instruction.
+- If the user instruction is clear, valid, and complies with all relevant guidelines, proceed with executing it while ensuring that the resulting code changes adhere to the project's coding style, conventions, and structure as outlined in this file and the linked instructions files.
+
+## Language Guidelines
+
+- Use clear and concise language when communicating with users, providing feedback, and explaining guidelines.
+- Avoid unnecessary pleasantries or filler language; focus on the technical content and actionable feedback.
+- When asking follow-up questions for clarification, be direct and specific about the information needed to proceed with the instruction while ensuring that the questions are relevant to the project guidelines and conventions.
 
 ## Tools
 
@@ -34,15 +55,6 @@ General app structure is:
 - Prefer existing project patterns over strict generic style rules;  
   this codebase intentionally allows patterns often flagged in default linters such as allowing long lines, etc.
 
-## Build And Test
-
-- Activate environment: `source venv/bin/activate` (always ensure this is active when working with Python code).
-- Test startup: `python launch.py --test`
-- Full startup: `python launch.py`
-- Full lint sequence: `pnpm lint`
-- Python checks individually: `pnpm ruff`, `pnpm pylint`
-- JS checks: `pnpm eslint` and `pnpm eslint-ui`
-
 ## Conventions
 
 - Keep PR-ready changes targeted to `dev` branch.
@@ -51,13 +63,6 @@ General app structure is:
 - Use existing CLI/API tool patterns in `cli/` and `test/` when adding automation scripts.
 - Respect environment-driven behavior (`SD_*` flags and options) instead of hardcoding platform/model assumptions.
 - For startup/init edits, preserve error handling and partial-failure tolerance in parallel scans and extension loading.
-
-## Pitfalls
-
-- Initialization order matters: startup paths in `launch.py` and `webui.py` are sensitive to import/load timing.
-- Shared mutable global state can create subtle regressions; prefer narrow, explicit changes.
-- Device/backend-specific code paths (**CUDA/ROCm/IPEX/DirectML/OpenVINO**) should not assume one platform.
-- Scripts and extension loading is dynamic; failures may appear only when specific extensions or models are present.
 
 ## File Creation
 
@@ -72,6 +77,10 @@ Use these repo-local skills for recurring SD.Next model integration work:
 - `port-model`  
   File: `.github/skills/port-model/SKILL.md`  
   Use when adding a new model family, porting a standalone script into a Diffusers pipeline, or wiring an upstream Diffusers model into SD.Next.
+
+- `port-pipeline`  
+  File: `.github/skills/port-pipeline/SKILL.md`  
+  Use when porting a custom model pipeline implementation to a Diffusers pipeline class with behavior parity and no hard-coded device or attention assumptions.
 
 - `debug-model`  
   File: `.github/skills/debug-model/SKILL.md`  

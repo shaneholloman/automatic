@@ -56,11 +56,11 @@ def return_controls(res, t: float | None = None):
     else:
         perf = return_stats(t)
     if res is None: # no response
-        return [None, None, None, None, '', perf]
+        return [None, None, None, '', perf]
     elif isinstance(res, str): # error response
-        return [None, None, None, None, res, perf]
+        return [None, None, None, res, perf]
     elif isinstance(res, tuple): # standard response received as tuple via control_run->yield(output_images, process_image, result_txt)
-        preview_image = res[1] # may be None
+        _preview_image = res[1] # may be None
         output_image = res[0][0] if isinstance(res[0], list) else res[0] # may be image or list of images
         if isinstance(res[0], list):
             output_gallery = res[0] if res[0][0] is not None else []
@@ -68,9 +68,9 @@ def return_controls(res, t: float | None = None):
             output_gallery = [res[0]] if res[0] is not None else [] # must return list, but can receive single image
         result_txt = res[2] if len(res) > 2 else '' # do we have a message
         output_video = res[3] if len(res) > 3 else None # do we have a video filename
-        return [preview_image, output_image, output_video, output_gallery, result_txt, perf]
+        return [output_image, output_video, output_gallery, result_txt, perf]
     else: # unexpected
-        return [None, None, None, None, f'Control: Unexpected response: {type(res)}', perf]
+        return [None, None, None, f'Control: Unexpected response: {type(res)}', perf]
 
 
 def get_units(*values):
@@ -167,12 +167,10 @@ def create_ui(_blocks: gr.Blocks=None):
 
                 with gr.Accordion(open=False, label="Input", elem_id="control_input", elem_classes=["small-accordion"]):
                     with gr.Row():
-                        show_input = gr.Checkbox(label="Show input", value=True, elem_id="control_show_input")
-                        show_preview = gr.Checkbox(label="Show preview", value=False, elem_id="control_show_preview")
-                    with gr.Row():
-                        input_type = gr.Radio(label="Control input type", choices=['Control only', 'Init image same as control', 'Separate init image'], value='Control only', type='index', elem_id='control_input_type')
+                        input_type = gr.Radio(label="Use init image", choices=['No: Control only', '1st: Same as control', '2nd: Separate image'], value='No: Control only', type='index', elem_id='control_input_type')
                     with gr.Row():
                         denoising_strength = gr.Slider(minimum=0.00, maximum=0.99, step=0.01, label='Denoising strength', value=0.30, elem_id="control_input_denoising_strength")
+                        skip_processing = gr.Checkbox(label="Skip input processing", value=False, elem_id="control_input_skip_processing")
 
                 with gr.Accordion(open=False, label="Size", elem_id="control_size", elem_classes=["small-accordion"]):
                     with gr.Tabs():
@@ -221,7 +219,7 @@ def create_ui(_blocks: gr.Blocks=None):
                 timer.startup.record('ui-networks')
 
             with gr.Row(elem_id='control-inputs'):
-                with gr.Column(scale=9, elem_id='control-input-column', visible=True) as column_input:
+                with gr.Column(scale=9, elem_id='control-input-column', visible=True) as _column_input:
                     gr.HTML('<span id="control-input-button">Input</p>')
                     with gr.Tabs(elem_classes=['control-tabs'], elem_id='control-tab-input'):
                         input_mode = gr.Label(value='select', visible=False)
@@ -241,15 +239,10 @@ def create_ui(_blocks: gr.Blocks=None):
                             input_folder = gr.File(label="Input", show_label=False, file_count='directory', file_types=['image'], interactive=True, height=gr_height)
                 with gr.Column(scale=9, elem_id='control-init-column', visible=False) as column_init:
                     gr.HTML('<span id="control-init-button">Init input</p>')
-                    with gr.Tabs(elem_classes=['control-tabs'], elem_id='control-tab-init'):
-                        with gr.Tab('Image', id='init-image') as tab_image_init:
-                            init_image = gr.Image(label="Input", show_label=False, type="pil", interactive=True, tool="editor", height=gr_height, elem_classes=['control-image'])
-                        with gr.Tab('Video', id='init-video') as tab_video_init:
-                            init_video = gr.Video(label="Input", show_label=False, interactive=True, height=gr_height, elem_classes=['control-image'])
-                        with gr.Tab('Batch', id='init-batch') as tab_batch_init:
-                            init_batch = gr.File(label="Input", show_label=False, file_count='multiple', file_types=['image'], interactive=True, height=gr_height, elem_classes=['control-image'])
-                        with gr.Tab('Folder', id='init-folder') as tab_folder_init:
-                            init_folder = gr.File(label="Input", show_label=False, file_count='directory', file_types=['image'], interactive=True, height=gr_height, elem_classes=['control-image'])
+                    if (installer.version['kanvas'] == 'disabled') or (installer.version['kanvas'] == 'unavailable'):
+                        init_image = gr.Image(label="Input", show_label=False, type="pil", interactive=True, tool="editor", height=gr_height, elem_classes=['control-image'])
+                    else:
+                        init_image = gr.HTML(value='<h1 style="text-align:center;color:var(--color-error);margin:1em;">Kanvas not initialized</h1>', elem_id='kanvas-container')
                 with gr.Column(scale=9, elem_id='control-output-column', visible=True) as _column_output:
                     gr.HTML('<span id="control-output-button">Output</p>')
                     with gr.Tabs(elem_classes=['control-tabs'], elem_id='control-tab-output') as output_tabs:
@@ -259,23 +252,12 @@ def create_ui(_blocks: gr.Blocks=None):
                             output_image = gr.Image(label="Output", show_label=False, type="pil", interactive=False, tool="editor", height=gr_height, elem_id='control_output_image', elem_classes=['control-image'])
                         with gr.Tab('Video', id='out-video'):
                             output_video = gr.Video(label="Output", show_label=False, height=gr_height, elem_id='control_output_video', elem_classes=['control-image'])
-                with gr.Column(scale=9, elem_id='control-preview-column', visible=False) as column_preview:
-                    gr.HTML('<span id="control-preview-button">Preview</p>')
-                    with gr.Tabs(elem_classes=['control-tabs'], elem_id='control-tab-preview'):
-                        with gr.Tab('Preview', id='preview-image') as _tab_preview:
-                            preview_process = gr.Image(label="Preview", show_label=False, type="pil", interactive=False, height=gr_height, visible=True, elem_id='control_preview', elem_classes=['control-image'])
-
 
             from modules.ui_control_elements import create_ui_elements
-            create_ui_elements(units, result_txt, preview_process)
+            create_ui_elements(units, result_txt, output_gallery)
 
             with gr.Row(elem_id="control_script_container"):
                 input_script_args = scripts_manager.scripts_current.setup_ui(parent='control', accordion=True)
-
-            # handlers
-            # for btn in input_buttons:
-            #     btn.click(fn=helpers.copy_input, inputs=[input_mode, btn, input_image, input_resize, input_inpaint], outputs=[input_image, input_resize, input_inpaint], _js='controlInputMode')
-            #     btn.click(fn=helpers.transfer_input, inputs=[btn], outputs=[input_image, input_resize, input_inpaint] + input_buttons)
 
             # hidden button to update gradio control values
             for u in units:
@@ -283,8 +265,6 @@ def create_ui(_blocks: gr.Blocks=None):
             btn_update = gr.Button('Update', interactive=True, visible=False, elem_id='control_update')
             btn_update.click(fn=get_units, inputs=controls, outputs=[], show_progress='hidden', queue=False)
 
-            show_input.change(fn=lambda x: gr.update(visible=x), inputs=[show_input], outputs=[column_input])
-            show_preview.change(fn=lambda x: gr.update(visible=x), inputs=[show_preview], outputs=[column_preview])
             input_type.change(fn=lambda x: gr.update(visible=x == 2), inputs=[input_type], outputs=[column_init])
             btn_prompt_counter.click(
                 fn=call_queue.wrap_queued_call(ui_common.update_token_counter),
@@ -299,11 +279,12 @@ def create_ui(_blocks: gr.Blocks=None):
                 show_progress = 'hidden',
             )
 
+            image_inputs = 5 * [input_image, init_image] # need to repeat controls for kanvas and non-kanvas modes
             select_dict = dict(
                 fn=helpers.select_input,
                 _js="controlInputMode",
-                inputs=[input_mode, input_image, init_image, input_type, input_video, input_batch, input_folder],
-                outputs=[output_tabs, preview_process, result_txt, width_before, height_before],
+                inputs=[input_mode, input_type, input_video, input_batch, input_folder] + image_inputs,
+                outputs=[output_tabs, result_txt, width_before, height_before],
                 show_progress='hidden',
                 queue=False,
             )
@@ -315,7 +296,7 @@ def create_ui(_blocks: gr.Blocks=None):
             prompt.submit(**select_dict)
             negative.submit(**select_dict)
             btn_generate.click(**select_dict)
-            for ctrl in [input_image, input_video, input_batch, input_folder, init_image, init_video, init_batch, init_folder, tab_image, tab_video, tab_batch, tab_folder, tab_image_init, tab_video_init, tab_batch_init, tab_folder_init]:
+            for ctrl in [input_image, input_video, input_batch, input_folder, init_image, tab_image, tab_video, tab_batch, tab_folder]:
                 if hasattr(ctrl, 'change'):
                     ctrl.change(**select_dict)
                 if hasattr(ctrl, 'clear'):
@@ -338,14 +319,13 @@ def create_ui(_blocks: gr.Blocks=None):
                 resize_mode_before, resize_name_before, resize_context_before, width_before, height_before, scale_by_before, selected_scale_tab_before,
                 resize_mode_after, resize_name_after, resize_context_after, width_after, height_after, scale_by_after, selected_scale_tab_after,
                 resize_mode_mask, resize_name_mask, resize_context_mask, width_mask, height_mask, scale_by_mask, selected_scale_tab_mask,
-                denoising_strength, batch_count, batch_size,
+                denoising_strength, skip_processing, batch_count, batch_size,
                 enable_hr, hr_sampler_index, hr_denoising_strength, hr_resize_mode, hr_resize_context, hr_upscaler, hr_force, hr_second_pass_steps, hr_scale, hr_resize_x, hr_resize_y, refiner_steps,
                 refiner_start, refiner_prompt, refiner_negative,
                 video_skip_frames, video_type, video_duration, video_loop, video_pad, video_interpolate,
                 override_script_name, override_script_args, override_settings,
             ]
             output_fields = [
-                preview_process,
                 output_image,
                 output_video,
                 output_gallery,
@@ -470,9 +450,9 @@ def create_ui(_blocks: gr.Blocks=None):
             generation_parameters_copypaste.register_paste_params_button(bindings)
 
             if (installer.version['kanvas'] == 'disabled') or (installer.version['kanvas'] == 'unavailable'):
-                masking.bind_controls([input_image], preview_process, output_image)
+                masking.bind_controls([input_image], output_image)
             else:
-                masking.bind_kanvas(input_image, preview_process)
+                masking.bind_kanvas(input_image, output_image)
 
             if os.environ.get('SD_CONTROL_DEBUG', None) is not None: # debug only
                 from modules.control.test import test_processors, test_controlnets, test_adapters, test_xs, test_lite
@@ -484,11 +464,11 @@ def create_ui(_blocks: gr.Blocks=None):
                     run_test_adapters_btn = gr.Button(value="Test:Adapters", variant='primary', elem_classes=['control-button'])
                     run_test_lite_btn = gr.Button(value="Test:Control-LLLite", variant='primary', elem_classes=['control-button'])
 
-                    run_test_processors_btn.click(fn=test_processors, inputs=[input_image], outputs=[preview_process, output_image, output_video, output_gallery])
-                    run_test_controlnets_btn.click(fn=test_controlnets, inputs=[prompt, negative, input_image], outputs=[preview_process, output_image, output_video, output_gallery])
-                    run_test_xs_btn.click(fn=test_xs, inputs=[prompt, negative, input_image], outputs=[preview_process, output_image, output_video, output_gallery])
-                    run_test_adapters_btn.click(fn=test_adapters, inputs=[prompt, negative, input_image], outputs=[preview_process, output_image, output_video, output_gallery])
-                    run_test_lite_btn.click(fn=test_lite, inputs=[prompt, negative, input_image], outputs=[preview_process, output_image, output_video, output_gallery])
+                    run_test_processors_btn.click(fn=test_processors, inputs=[input_image], outputs=[output_image, output_video, output_gallery])
+                    run_test_controlnets_btn.click(fn=test_controlnets, inputs=[prompt, negative, input_image], outputs=[output_image, output_video, output_gallery])
+                    run_test_xs_btn.click(fn=test_xs, inputs=[prompt, negative, input_image], outputs=[output_image, output_video, output_gallery])
+                    run_test_adapters_btn.click(fn=test_adapters, inputs=[prompt, negative, input_image], outputs=[output_image, output_video, output_gallery])
+                    run_test_lite_btn.click(fn=test_lite, inputs=[prompt, negative, input_image], outputs=[output_image, output_video, output_gallery])
 
     ui_extra_networks.setup_ui(extra_networks_ui, output_gallery)
     return [(control_ui, 'Control', 'control')]

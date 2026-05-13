@@ -178,7 +178,7 @@ class YoloRestorer(Detailer):
                 max_size = opt_max if 0 < opt_max <= 1 else 1
                 if x_size >= min_size and y_size >=min_size and x_size <= max_size and y_size <= max_size:
                     if mask:
-                        if detailer_opt(p, 'detailer_segmentation', 'detailer_seg') and seg is not None:
+                        if detailer_opt(p, 'detailer_segmentation') and seg is not None:
                             masked = seg
                         else:
                             masked = Image.new('L', image.size, 0)
@@ -267,7 +267,7 @@ class YoloRestorer(Detailer):
         color = (0, 190, 190)
         log.debug(f'Detailer: draw={items}')
         for i, item in enumerate(items):
-            if detailer_opt(p, 'detailer_segmentation', 'detailer_seg') and item.mask is not None:
+            if detailer_opt(p, 'detailer_segmentation') and item.mask is not None:
                 mask = item.mask.convert('L')
             else:
                 mask = Image.new('L', image.size, 0)
@@ -427,9 +427,12 @@ class YoloRestorer(Detailer):
                 pc.negative_prompt = negative_lines[i*len(items)+j]
                 pc.prompts = [pc.prompt]
                 pc.negative_prompts = [pc.negative_prompt]
-                pc.prompts, pc.network_data = extra_networks.parse_prompts(pc.prompts)
-                extra_networks.activate(pc, pc.network_data)
-                log.debug(f'Detail: model="{i+1}:{name}" item={j+1}/{len(items)} box={item.box} label="{item.label}" score={item.score:.2f} seg={detailer_opt(p, "detailer_segmentation", "detailer_seg")} prompt="{pc.prompt}"')
+                pc.prompts, pc.network_data = extra_networks.parse_prompts(pc.prompts, pc.network_data)
+                pc.disable_extra_networks = True # disable processing_diffusers from handling network activation since its handled here
+                network_same = len(p.network_data.values()) == len(pc.network_data.values()) and all(x == y for x, y in zip(p.network_data.values(), pc.network_data.values()))
+                if not network_same:
+                    extra_networks.activate(pc, pc.network_data)
+                log.debug(f'Detail: model="{i+1}:{name}" item={j+1}/{len(items)} box={item.box} label="{item.label}" score={item.score:.2f} seg={detailer_opt(p, "detailer_segmentation")} network={network_same} prompt="{pc.prompt}"')
                 pc.init_images = [image]
                 pc.image_mask = [item.mask]
                 pc.overlay_images = []
@@ -443,7 +446,8 @@ class YoloRestorer(Detailer):
                 # process
                 jobid = shared.state.begin('Detailer')
                 pp = processing.process_images_inner(pc)
-                extra_networks.deactivate(pc, force=True)
+                if not network_same:
+                    extra_networks.deactivate(pc, force=True)
                 shared.sd_model.fail_on_switch_error = False
                 shared.state.end(jobid)
 

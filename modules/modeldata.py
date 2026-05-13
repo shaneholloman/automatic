@@ -48,6 +48,8 @@ def get_model_type(pipe):
         model_type = 'chroma'
     elif "Flux2" in name:
         model_type = 'f2'
+    elif "UltraFlux" in name:
+        model_type = 'ultraflux'
     elif "Flux" in name or "Flex1" in name or "Flex2" in name:
         model_type = 'f1'
     elif "ZImage" in name or "Z-Image" in name:
@@ -70,9 +72,11 @@ def get_model_type(pipe):
         model_type = 'sana'
     elif 'VIBE' in name:
         model_type = 'sana'
+    elif "HiDreamO1" in name:
+        model_type = 'o1'
     elif "HiDream" in name:
         model_type = 'h1'
-    elif "AnimaTextToImage" in name:
+    elif name.startswith("Anima") and "AnimateDiff" not in name:
         model_type = 'anima'
     elif "Cosmos2TextToImage" in name:
         model_type = 'cosmos'
@@ -108,6 +112,8 @@ def get_model_type(pipe):
         model_type = 'glmimage'
     elif 'Step1XEdit' in name:
         model_type = 'step1x_edit'
+    elif 'JoyImageEdit' in name:
+        model_type = 'joy'
     elif 'OvisImage' in name or 'Ovis-Image' in name:
         model_type = 'ovis'
     elif 'Wan' in name:

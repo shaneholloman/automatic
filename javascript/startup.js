@@ -50,6 +50,7 @@ async function initStartup() {
   startupPromises.push(initAccordions());
   startupPromises.push(initSettings());
   startupPromises.push(initImageViewer());
+  startupPromises.push(initGallery());
   startupPromises.push(initiGenerationParams());
   startupPromises.push(initChangelog());
   startupPromises.push(setupControlUI());
@@ -65,14 +66,14 @@ async function initStartup() {
   }
 
   executeCallbacks(uiReadyCallbacks);
-  startupPromises.push(initGallery());
-  startupPromises.push(setRefreshInterval());
-  startupPromises.push(setupExtraNetworks());
 
   // optinally wait for modern ui
   if (window.waitForUiReady) await waitForUiReady();
 
   // post startup tasks that may take longer but are not critical
+  startupPromises.push(initGallery());
+  startupPromises.push(setRefreshInterval());
+  startupPromises.push(setupExtraNetworks());
   startupPromises.push(initAutocomplete());
   startupPromises.push(monitorConnection());
   startupPromises.push(showNetworks());
@@ -80,6 +81,7 @@ async function initStartup() {
   startupPromises.push(applyStyles());
   startupPromises.push(initIndexDB());
   startupPromises.push(initLogMonitor());
+  startupPromises.push(initTableSorter());
 
   t1 = performance.now();
   log('initStartup', Math.round(1000 * (t1 - t0) / 1000000));

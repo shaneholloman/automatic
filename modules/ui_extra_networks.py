@@ -54,15 +54,14 @@ preview_map = None
 
 def init_api():
 
-    def fetch_file(filename: str = ""):
+    def get_thumb(filename: str = ""):
         global allowed_dirs # pylint: disable=global-statement
         if len(allowed_dirs) == 0:
             allowed_dirs = shared.demo.allowed_paths
         if filename is None or len(filename) == 0:
             return JSONResponse({ "error": "no filename" }, status_code=400)
-        if not os.path.exists(filename) or not os.path.isfile(filename):
+        if not os.path.exists(filename) or not os.path.isfile(filename) or os.path.getsize(filename) == 0:
             return FileResponse('html/missing.png', headers={"Accept-Ranges": "bytes"})
-            # return JSONResponse({ "error": f"file {filename}: not found" }, status_code=404)
         if filename.startswith('html/') or filename.startswith('models/'):
             return FileResponse(filename, headers={"Accept-Ranges": "bytes"})
         if not any(Path(folder).absolute() in Path(filename).absolute().parents for folder in allowed_dirs):
@@ -118,7 +117,7 @@ def init_api():
         return JSONResponse(obj)
 
     shared.api.add_api_route("/sdapi/v1/network", get_network, methods=["GET"])
-    shared.api.add_api_route("/sdapi/v1/network/thumb", fetch_file, methods=["GET"], auth=False)
+    shared.api.add_api_route("/sdapi/v1/network/thumb", get_thumb, methods=["GET"], auth=False)
     shared.api.add_api_route("/sdapi/v1/network/metadata", get_metadata, methods=["GET"])
     shared.api.add_api_route("/sdapi/v1/network/info", get_info, methods=["GET"])
     shared.api.add_api_route("/sdapi/v1/network/desc", get_desc, methods=["GET"])
@@ -199,26 +198,37 @@ class ExtraNetworksPage:
 
     def link_preview(self, filename: str):
         quoted_filename = urllib.parse.quote(filename.replace('\\', '/'))
-        mtime = os.path.getmtime(filename) if os.path.exists(filename) else 0
-        preview = f"{shared.opts.subpath}/sdapi/v1/network/thumb?filename={quoted_filename}&mtime={mtime}"
+        # mtime = os.path.getmtime(filename) if os.path.exists(filename) else 0
+        # preview = f"{shared.opts.subpath}/sdapi/v1/network/thumb?filename={quoted_filename}&mtime={mtime}"
+        preview = f"{shared.opts.subpath}/sdapi/v1/network/thumb?filename={quoted_filename}"
         return preview
 
     def get_exif(self, image: Image.Image):
         import piexif
         import piexif.helper
+        parameters = ''
         try:
-            exifinfo = image.getexif()
-            if exifinfo is not None and len(exifinfo) > 0:
-                return piexif.dump({ "Exif": { piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(exifinfo, encoding="unicode") } })
+            info = image.info or {}
+            for key in ('parameters', 'UserComment'):
+                value = info.get(key)
+                if value and str(value).strip():
+                    parameters = str(value)
+                    break
         except Exception:
             pass
-        try:
-            exifinfo = image.info.get('parameters', None)
-            if exifinfo is not None and len(exifinfo) > 0:
-                return piexif.dump({ "Exif": { piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(exifinfo, encoding="unicode") } })
-        except Exception:
-            pass
-        return piexif.dump({ "Exif": { piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump('', encoding="unicode") } })
+        if not parameters:
+            try:
+                exif_bytes = (image.info or {}).get('exif')
+                if exif_bytes:
+                    parsed = piexif.load(exif_bytes)
+                    raw = parsed.get('Exif', {}).get(piexif.ExifIFD.UserComment)
+                    if raw:
+                        decoded = piexif.helper.UserComment.load(raw)
+                        if decoded and decoded.strip():
+                            parameters = decoded
+            except Exception:
+                pass
+        return piexif.dump({ "Exif": { piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(parameters, encoding="unicode") } })
 
     def create_thumb(self):
         debug(f'EN create-thumb: {self.name}')
@@ -913,7 +923,10 @@ def create_ui(container, button_parent: gr.Button, tabname: str, skip_indexing =
                 b64str = ui.last_item.preview.split(',',1)[1]
                 img = Image.open(io.BytesIO(base64.b64decode(b64str)))
             elif hasattr(item, 'local_preview') and os.path.exists(item.local_preview):
-                img = item.local_preview
+                if os.path.getsize(item.local_preview) < 1024: # sanity check
+                    img = page.find_preview_file(item.filename)
+                else:
+                    img = item.local_preview
             else:
                 img = page.find_preview_file(item.filename)
 
