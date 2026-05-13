@@ -4,6 +4,8 @@
 
 ### Highlights for 2026-05-13
 
+Just two weeks since last release, but we have a lot of new models and features to cover!
+
 *What's New?*
 - Image editing models now can work with multiple image inputs!
 - Six new models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
