@@ -9,7 +9,7 @@
 - Six new models: *HiDream-O1 Image*, *JoyAI Image Edit*, *Step1X-Edit*, *VIBE Image Edit* and *UltraFlux*
 - Enhanced capabilities for *Anima*, *Ernie-Image*, *LTX*, *Flux.2* and *Chroma* models
 - Enhanced *LoRA* capabilities in many models
-- UI improvements accross the board: *Main panels*, *Gallery*, *Kanvas*, *Networks*, and more...
+- UI improvements across the board: *Main panels*, *Gallery*, *Kanvas*, *Networks*, and more...
 
 For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md)  
 
@@ -26,7 +26,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
     *note*: use steps:50 for base and steps:28 for dev variants  
   - [JoyAI Image Edit](https://huggingface.co/jdopensource/JoyAI-Image-Edit-Diffusers) image-editing model support  
     includes multimodal conditioning using *Qwen3-VL* with a dedicated *JoyImageEdit* diffusion transformer  
-    *note* this is a large model at 50GB so use of agressive quantization is recommended  
+    *note* this is a large model at 50GB so use of aggressive quantization is recommended  
   - [StepFun Step1X-Edit v1.1](https://huggingface.co/stepfun-ai/Step1X-Edit-v1p1-diffusers) image-editing model support  
     step1x is a large dedicated image edit model combining qwen-2.5 8B encoder with custom 12.4B transformer  
   - [VIBE Image Edit](https://huggingface.co/iitolstykh/VIBE-Image-Edit) image-editing model support  
@@ -35,7 +35,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - [AlphaVLLM Lumina-DiMOO](https://huggingface.co/Alpha-VLLM/Lumina-DiMOO) unified multimodal diffusion model  
     includes *T2I*, *I2I edit*, and *MMU* capabilities in a single pipeline  
     *note* model also supports special prompts: *dense, canny_pred, control, subject, edit, ref_transfer, multi_view*  
-    *note* as with most multi-modal/unified models, it needs higher step count (recommended is 64 steps) and uses quite a lot of VRAM, so use with caution!  
+    *note* as with most multimodal/unified models, it needs higher step count (recommended is 64 steps) and uses quite a lot of VRAM, so use with caution!  
   - [Owen777 UltraFlux-v1](https://huggingface.co/Owen777/UltraFlux-v1) native 4K text-to-image model based on *FLUX.1-dev*  
     *note*: UltraFlux is capable of rendering images up to 4K resolution, but it doesnt mean it will do that on any hardware - it will depend on your VRAM!  
   - [Anima Preview-v3](https://huggingface.co/circlestone-labs/Anima)  
@@ -66,7 +66,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - all ui panels can be *minimized/maximized* by clicking on their header  
     state is preserved across sessions and can be used to hide rarely used panels and declutter the workspace  
   - **Kanvas** re-order stages by clicking on active stage  
-    order of stages detemines order of images passed to model  
+    order of stages determines order of images passed to model  
   - **Kanvas** *magic-wand* tool now works on mask layer and auto-creates mask based on perceptual tolerance  
   - **Gallery** add thumbnail size slider
   - **Gallery** add quick info/download/delete buttons on thumbnail hover
