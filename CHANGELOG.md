@@ -21,6 +21,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - [HiDream-O1-Image](https://huggingface.co/HiDream-ai/HiDream-O1-Image) pixel-level unified transformer model support  
     HiDream-O1 is based on a single custom *Qwen3-VL* 8.8B 35GB component  
     includes both **HiDream-O1-Image** *(base)* and **HiDream-O1-Image-Dev** *(distilled*)* variants  
+    includes *sdnq-svd-dynamic-int8* pre-quantized variants for both base and dev models
     includes *T2I* and *I2I edit* capabilities and resolutions up to 2048px   
     *note*: use steps:50 for base and steps:28 for dev variants  
   - [JoyAI Image Edit](https://huggingface.co/jdopensource/JoyAI-Image-Edit-Diffusers) image-editing model support  
@@ -33,10 +34,13 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
     primarily image-editing model, but supports t2i as well, uses multi-scale resolution binning up to 2048px  
   - [AlphaVLLM Lumina-DiMOO](https://huggingface.co/Alpha-VLLM/Lumina-DiMOO) unified multimodal diffusion model  
     includes *T2I*, *I2I edit*, and *MMU* capabilities in a single pipeline  
-    *note* in addition to normal prompt-based image editing, model also supports special prompts: *dense, canny_pred, control, subject, edit, ref_transfer, multi_view*  
+    *note* model also supports special prompts: *dense, canny_pred, control, subject, edit, ref_transfer, multi_view*  
     *note* as with most multi-modal/unified models, it needs higher step count (recommended is 64 steps) and uses quite a lot of VRAM, so use with caution!  
   - [Owen777 UltraFlux-v1](https://huggingface.co/Owen777/UltraFlux-v1) native 4K text-to-image model based on *FLUX.1-dev*  
     *note*: UltraFlux is capable of rendering images up to 4K resolution, but it doesnt mean it will do that on any hardware - it will depend on your VRAM!  
+  - [Anima Preview-v3](https://huggingface.co/circlestone-labs/Anima)  
+    add *turbo* variant with [turbo-LoRA](https://civitai.com/models/2560840/anima-turbo-lora) pre-merged  
+    add *sdnq-svd-dynamic-int8* pre-quantized variant  
 - **Features**
   - **Multi-image** workflows!  
     for models that support multiple images as inputs, you can now add multiple stages in Kanvas  
