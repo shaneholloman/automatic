@@ -23,7 +23,7 @@ ftfy
 # versioned
 fastapi==0.124.4
 rich==14.1.0
-safetensors==0.7.0
+safetensors==0.8.0rc0
 peft==0.19.1
 httpx==0.28.1
 requests==2.32.3

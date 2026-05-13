@@ -116,7 +116,7 @@ function requestProgress(id_task = 'undefined', progressEl = null, galleryEl = n
     };
   };
 
-  const done = (ok = false) => {
+  const removeLivePreview = (ok = false) => {
     debug('taskEnd:', id_task);
     localStorage.removeItem('task');
     setProgress();
@@ -142,7 +142,7 @@ function requestProgress(id_task = 'undefined', progressEl = null, galleryEl = n
     if (atEnd) atEnd();
   };
 
-  const start = (id_task, id_live_preview) => { // eslint-disable-line no-shadow
+  const startLivePreview = (id_task, id_live_preview) => { // eslint-disable-line no-shadow
     if (opts.live_preview_refresh_period === 0) return;
     const request_id = document.hidden ? -1 : id_live_preview;
 
@@ -153,17 +153,17 @@ function requestProgress(id_task = 'undefined', progressEl = null, galleryEl = n
       hasStarted |= res.active;
       if (res.completed || (!res.active && (hasStarted || once))) {
         debug('progress', { end: res, reason: res.completed ? 'completed' : 'inactive' });
-        if (!res.paused) done(true); // only abort if not paused
+        if (!res.paused) removeLivePreview(true); // only abort if not paused
         return;
       }
       if (elapsedFromStart > progressTimeout && !res.queued && res.progress === prevProgress) {
         debug('progress', { end: res, reason: 'progressSimeout' });
-        if (!res.paused) done(false); // only abort if not paused
+        if (!res.paused) removeLivePreview(false); // only abort if not paused
         return;
       }
       if (elapsedFromStart > startTimeout && !res.queued && !res.active) {
         debug('progress', { end: res, reason: 'startTimeout' });
-        if (!res.paused) done(false); // only abort if not paused
+        if (!res.paused) removeLivePreview(false); // only abort if not paused
         return;
       }
       if (res.progress !== prevProgress) {
@@ -177,16 +177,16 @@ function requestProgress(id_task = 'undefined', progressEl = null, galleryEl = n
         id_live_preview = res.id_live_preview;
       }
       if (onProgress) onProgress(res);
-      setTimeout(() => start(id_task, id_live_preview), opts.live_preview_refresh_period || 500);
+      setTimeout(() => startLivePreview(id_task, id_live_preview), opts.live_preview_refresh_period || 500);
     };
 
     const onProgressErrorHandler = (err) => {
       error('progress', { error: err });
-      done();
+      removeLivePreview(false);
     };
 
     xhrPost('./internal/progress', { id_task, id_live_preview: request_id }, onProgressHandler, onProgressErrorHandler, false, 30000);
   };
   debug('progress', { start: dateStart });
-  start(id_task, 0);
+  startLivePreview(id_task, 0);
 }

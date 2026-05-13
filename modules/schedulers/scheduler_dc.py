@@ -1061,6 +1061,24 @@ class DCSolverMultistepScheduler(SchedulerMixin, ConfigMixin):
         """
         return sample
 
+    def scale_noise(
+        self,
+        sample: torch.FloatTensor,
+        timestep: Union[float, torch.FloatTensor],
+        noise: Optional[torch.FloatTensor] = None,
+    ) -> torch.FloatTensor:
+        if noise is None:
+            noise = torch.randn_like(sample)
+        if not isinstance(timestep, torch.Tensor):
+            timestep = torch.tensor([timestep], device=sample.device)
+        else:
+            timestep = timestep.to(sample.device)
+            if timestep.ndim == 0:
+                timestep = timestep.unsqueeze(0)
+        if timestep.shape[0] != sample.shape[0]:
+            timestep = timestep.repeat(sample.shape[0])
+        return self.add_noise(sample, noise, timestep)
+
     # Copied from diffusers.schedulers.scheduling_dpmsolver_multistep.DPMSolverMultistepScheduler.add_noise
     def add_noise(
         self,

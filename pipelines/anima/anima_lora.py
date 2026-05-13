@@ -114,7 +114,7 @@ def try_load_lora(name, network_on_disk, lora_scale):
         matched += 1
     if matched == 0:
         return None
-    log.debug(f'Network load: type=LoRA name="{name}" native modules={matched} unmatched={unmatched} scale={lora_scale}')
+    log.debug(f'Network load: type=LoRA name="{name}" method=native modules={matched} unmatched={unmatched} scale={lora_scale}')
     if unmatched > 0 and l.debug:
         log.debug(f'Network load: type=LoRA name="{name}" unmatched_samples={unmatched_samples}')
     l.timer.activate += time.time() - t0

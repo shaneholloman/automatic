@@ -208,7 +208,11 @@ class FlashFlowMatchEulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
 
             sigmas = timesteps / self.config.num_train_timesteps
         else:
-            sigmas = np.array(sigmas).astype(np.float32)
+            if isinstance(sigmas, torch.Tensor):
+                sigmas = sigmas.detach().cpu().numpy()
+            else:
+                sigmas = np.asarray(sigmas, dtype=np.float32)
+            sigmas = sigmas.astype(np.float32, copy=False)
             num_inference_steps = len(sigmas)
         self.num_inference_steps = num_inference_steps
 

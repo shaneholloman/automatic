@@ -181,6 +181,10 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             sigmas = np.linspace(self.sigma_max, self.sigma_min,
                                  num_inference_steps +
                                  1).copy()[:-1]  # pyright: ignore
+        elif isinstance(sigmas, torch.Tensor):
+            sigmas = sigmas.detach().cpu().numpy()
+        else:
+            sigmas = np.asarray(sigmas, dtype=np.float32)
 
         if self.config.use_dynamic_shifting:
             sigmas = self.time_shift(mu, 1.0, sigmas)  # pyright: ignore
@@ -757,6 +761,41 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
                 A scaled input sample.
         """
         return sample
+
+    def scale_noise(
+        self,
+        sample: torch.FloatTensor,
+        timestep: Union[float, torch.FloatTensor],
+        noise: Optional[torch.FloatTensor] = None,
+    ) -> torch.FloatTensor:
+        """Forward process in flow-matching."""
+        sigmas = self.sigmas.to(device=sample.device, dtype=sample.dtype)
+
+        if sample.device.type == "mps" and torch.is_floating_point(timestep):
+            # mps does not support float64
+            schedule_timesteps = self.timesteps.to(sample.device, dtype=torch.float32)
+            timestep = timestep.to(sample.device, dtype=torch.float32)
+        else:
+            schedule_timesteps = self.timesteps.to(sample.device)
+            timestep = timestep.to(sample.device)
+
+        if self.begin_index is None:
+            step_indices = [self.index_for_timestep(t, schedule_timesteps) for t in timestep]
+        elif self.step_index is not None:
+            # add_noise is called after first denoising step (for inpainting)
+            step_indices = [self.step_index] * timestep.shape[0]
+        else:
+            # add noise is called before first denoising step to create initial latent(img2img)
+            step_indices = [self.begin_index] * timestep.shape[0]
+
+        sigma = sigmas[step_indices].flatten()
+        while len(sigma.shape) < len(sample.shape):
+            sigma = sigma.unsqueeze(-1)
+
+        if noise is None:
+            noise = torch.randn_like(sample)
+
+        return sigma * noise + (1.0 - sigma) * sample
 
     # Copied from diffusers.schedulers.scheduling_dpmsolver_multistep.DPMSolverMultistepScheduler.add_noise
     def add_noise(

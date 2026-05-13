@@ -216,6 +216,7 @@ def compile_torch(sd_model, apply_to_components=True, op="Model"):
         # configure torch.dynamo
         if hasattr(torch, '_logging'):
             torch._logging.set_logs(dynamo=log_level, aot=log_level, inductor=log_level) # pylint: disable=protected-access
+            setup_logging() # dynamo messes with logging so reset is needed
         torch._dynamo.config.verbose = verbose # pylint: disable=protected-access
         torch._dynamo.config.suppress_errors = not verbose # pylint: disable=protected-access
         if 'dynamic' in shared.opts.cuda_compile_options:

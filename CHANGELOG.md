@@ -1,8 +1,8 @@
 # Change Log for SD.Next
 
-## Update for 2026-05-12
+## Update for 2026-05-13
 
-### Highlights for 2026-05-12
+### Highlights for 2026-05-13
 
 *What's New?*
 - Image editing models now can work with multiple image inputs!
@@ -15,7 +15,7 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
 
 [ReadMe](https://github.com/vladmandic/automatic/blob/master/README.md) | [ChangeLog](https://github.com/vladmandic/automatic/blob/master/CHANGELOG.md) | [Docs](https://vladmandic.github.io/sdnext-docs/) | [WiKi](https://github.com/vladmandic/automatic/wiki) | [Discord](https://discord.com/invite/sd-next-federal-batch-inspectors-1101998836328697867) | [Sponsor](https://github.com/sponsors/vladmandic)  
 
-### Details for 2026-05-12
+### Details for 2026-05-13
 
 - **Models**
   - [HiDream-O1-Image](https://huggingface.co/HiDream-ai/HiDream-O1-Image) pixel-level unified transformer model support  
@@ -108,6 +108,8 @@ For full details, see [ChangeLog](https://github.com/vladmandic/automatic/blob/m
   - `ipadapters` with offloading
   - `kanvas` outpaint
   - `network` preview handle invalid image
+  - `schedulers` improve *set_timesteps* handling
+  - `schedulers` improve *scale_noise* handling
 
 ## Update for 2026-04-28
 
